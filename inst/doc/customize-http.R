@@ -22,10 +22,20 @@ knitr::opts_chunk$set(
 
 ## -----------------------------------------------------------------------------
 #  # disabling certificate trust (can allow man-in-the-middle attacks, etc.)
-#  httr::set_config(httr::config(ssl_verifypeer = 0))
+#  httr::set_config(httr::config(ssl_verifypeer = 0, ssl_verifyhost = 0))
 #  
 #  # should work
+#  client <- connect()
 #  get_users(client)
+
+## -----------------------------------------------------------------------------
+#  httr::with_config(
+#    httr::config(ssl_verifypeer = 0, ssl_verifyhost = 0),
+#    {
+#      client <- connect()
+#      get_users(client)
+#    }
+#  )
 
 ## -----------------------------------------------------------------------------
 #  # for instance, to set custom headers (i.e. to get through a proxy)
