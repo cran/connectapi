@@ -12,7 +12,7 @@
 
 <meta name="author" content="Cole Arendt" />
 
-<meta name="date" content="2023-01-31" />
+<meta name="date" content="2024-06-06" />
 
 <title>Customize HTTP Requests</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Customize HTTP Requests</h1>
 <h4 class="author">Cole Arendt</h4>
-<h4 class="date">2023-01-31</h4>
+<h4 class="date">2024-06-06</h4>
 
 
 
@@ -365,19 +365,19 @@ package allows you to configure your HTTP requests globally using
 below.</p>
 <div id="custom-ca-bundle" class="section level3">
 <h3>Custom CA Bundle</h3>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(httr)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(connectapi)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># notice that TLS verification fails</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">get_users</span>(client)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># use a custom Certificate Authority to verify SSL/TLS requests</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>httr<span class="sc">::</span><span class="fu">set_config</span>(httr<span class="sc">::</span><span class="fu">config</span>(<span class="at">cainfo =</span> <span class="st">&quot;/path/to/my.pem&quot;</span>))</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># now it should succeed!</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">get_users</span>(client)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(httr)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(connectapi)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co"># notice that TLS verification fails</span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">get_users</span>(client)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="co"># use a custom Certificate Authority to verify SSL/TLS requests</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>httr<span class="sc">::</span><span class="fu">set_config</span>(httr<span class="sc">::</span><span class="fu">config</span>(<span class="at">cainfo =</span> <span class="st">&quot;/path/to/my.pem&quot;</span>))</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co"># now it should succeed!</span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="fu">get_users</span>(client)</span></code></pre></div>
 </div>
 <div id="turn-off-certificate-trust-verification---only-for-testing" class="section level3">
 <h3>Turn Off Certificate Trust Verification - ONLY FOR TESTING</h3>
@@ -388,20 +388,20 @@ trust this server as a “self-declared” trustworthy actor).</p>
 <p>However, it can be useful while the organization’s Certificate
 Authority (CA) is in the process of issuing a valid certificate, or
 while a certificate is procured from a public CA.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># disabling certificate trust (can allow man-in-the-middle attacks, etc.)</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>httr<span class="sc">::</span><span class="fu">set_config</span>(httr<span class="sc">::</span><span class="fu">config</span>(<span class="at">ssl_verifypeer =</span> <span class="dv">0</span>, <span class="at">ssl_verifyhost =</span> <span class="dv">0</span>))</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># should work </span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">get_users</span>(client)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># disabling certificate trust (can allow man-in-the-middle attacks, etc.)</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>httr<span class="sc">::</span><span class="fu">set_config</span>(httr<span class="sc">::</span><span class="fu">config</span>(<span class="at">ssl_verifypeer =</span> <span class="dv">0</span>, <span class="at">ssl_verifyhost =</span> <span class="dv">0</span>))</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co"># should work</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="fu">get_users</span>(client)</span></code></pre></div>
 <p>You can also do this in a more scoped fashion:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>httr<span class="sc">::</span><span class="fu">with_config</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  httr<span class="sc">::</span><span class="fu">config</span>(<span class="at">ssl_verifypeer =</span> <span class="dv">0</span>, <span class="at">ssl_verifyhost =</span> <span class="dv">0</span>),</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  {</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">get_users</span>(client)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>httr<span class="sc">::</span><span class="fu">with_config</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  httr<span class="sc">::</span><span class="fu">config</span>(<span class="at">ssl_verifypeer =</span> <span class="dv">0</span>, <span class="at">ssl_verifyhost =</span> <span class="dv">0</span>),</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  {</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>    client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>    <span class="fu">get_users</span>(client)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  }</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="custom-headers-cookies-proxy-etc." class="section level3">
 <h3>Custom Headers, Cookies, Proxy, etc.</h3>
@@ -414,19 +414,19 @@ be done by way of the <code>client$httr_config()</code> function.</p>
 saved and passed to any subsequent <code>GET</code>, <code>PUT</code>,
 <code>POST</code>, <code>PATCH</code>, <code>HEAD</code>,
 <code>DELETE</code> requests you send with that client.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># for instance, to set custom headers (i.e. to get through a proxy)</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">httr_config</span>(httr<span class="sc">::</span><span class="fu">add_headers</span>(<span class="at">MY_MAGIC_HEADER=</span><span class="st">&quot;value&quot;</span>))</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># or to clear sticky cookies if you want to switch nodes in an HA cluster</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">server_settings</span>()<span class="sc">$</span>hostname</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">httr_config</span>(<span class="at">handle =</span> httr<span class="sc">::</span><span class="fu">handle</span>(<span class="st">&#39;&#39;</span>))</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># now you have a chance to get a new host</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">server_settings</span>()<span class="sc">$</span>hostname</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># use an outbound proxy</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">httr_config</span>(httr<span class="sc">::</span><span class="fu">use_proxy</span>(<span class="st">&quot;http://myproxy.example.com&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># for instance, to set custom headers (i.e. to get through a proxy)</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">httr_config</span>(httr<span class="sc">::</span><span class="fu">add_headers</span>(<span class="at">MY_MAGIC_HEADER =</span> <span class="st">&quot;value&quot;</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># or to clear sticky cookies if you want to switch nodes in an HA cluster</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">server_settings</span>()<span class="sc">$</span>hostname</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">httr_config</span>(<span class="at">handle =</span> httr<span class="sc">::</span><span class="fu">handle</span>(<span class="st">&quot;&quot;</span>))</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co"># now you have a chance to get a new host</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">server_settings</span>()<span class="sc">$</span>hostname</span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co"># use an outbound proxy</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">httr_config</span>(httr<span class="sc">::</span><span class="fu">use_proxy</span>(<span class="st">&quot;http://myproxy.example.com&quot;</span>))</span></code></pre></div>
 <blockquote>
 <p>NOTE: these values are completely overwritten each time you call
 <code>client$httr_config()</code>, so ensure that you pass all desired
@@ -441,11 +441,11 @@ of an advanced topic. However, it <em>is</em> possible with
 <p>It is worth noting that today, this interferes with API key
 authentication, which we are hoping to improve in a future release of
 Posit Connect.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># disables authentication header that is included by default</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>client<span class="sc">$</span>using_auth <span class="ot">=</span> <span class="cn">FALSE</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># use Kerberos authentication mechanism (requires local credential cache)</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">httr_config</span>(httr<span class="sc">::</span><span class="fu">authenticate</span>(<span class="st">&quot;:&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="at">type=</span><span class="st">&quot;gssnegotiate&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># disables authentication header that is included by default</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>client<span class="sc">$</span>using_auth <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co"># use Kerberos authentication mechanism (requires local credential cache)</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>client<span class="sc">$</span><span class="fu">httr_config</span>(httr<span class="sc">::</span><span class="fu">authenticate</span>(<span class="st">&quot;:&quot;</span>, <span class="st">&quot;&quot;</span>, <span class="at">type =</span> <span class="st">&quot;gssnegotiate&quot;</span>))</span></code></pre></div>
 </div>
 </div>
 

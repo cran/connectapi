@@ -1,3 +1,31 @@
+# connectapi 0.2.0
+
+## Breaking changes
+
+- All previously deprecated functions are now removed.
+- The functions `Connect$download_bundle()` and
+  `Connect$bundle_delete()` have been removed. Use `Content$bundle_download()`
+  and `Content$bundle_delete()` instead.
+- `audit_vanity_urls()` has been removed. To check if a vanity URL is in use,
+  use `vanity_is_available()` instead.
+- Other `audit_*` functions have been modified to accept the result of `get_content()` rather than `cache_apps()` (which is now removed). They are faster as a result.
+- dplyr is no longer a required dependency. If you use `tbl_connect()`,
+  you will need to install dplyr and dbplyr explicitly. (#246)
+
+## Enhancements and fixes
+
+- The package is now tested against many versions of Connect, back to 1.8.8.2 (May 2021).
+  There are now fewer warnings about version mismatches: you should only see a warning if your Connect server is older than that. (#244)
+- Now correctly provides methods for `tbl_connect`, rather than `tbl_lazy`,
+  preventing problems when also using dplyr (#177).
+- `progress` is now an optional dependency. To show pretty progress bars, install
+  the package explicitly. (#269)
+- `Content$tag_delete()` removes the tag from the target content item rather
+  than removing the tag entirely. (#194)
+- `audit_r_versions()` returns a bar chart instead of a histogram (#179)
+- Fix issue with `NULL` or `length 1` job outputs ([#193](https://github.com/rstudio/connectapi/issues/193))
+- Timestamp parsing now correctly preserves time components (#259)
+
 # connectapi 0.1.3.1
 
 - Fix generated documentation HTML for CRAN submission
@@ -115,7 +143,7 @@
 
 # connectapi 0.1.0.9017
 
-BREAKING: 
+BREAKING:
 * Switch from `RSTUDIO_CONNECT_*` variables to `CONNECT_*` variables
 * Rename a handful of functions:
   - `connect$activate_bundle` to `connect$content_deploy`
@@ -133,7 +161,7 @@ BREAKING:
   - `cache_apps`
   - `tag_page`
 
-OTHER: 
+OTHER:
 * Add some endpoints:
   - `content`
   - `audit_logs`

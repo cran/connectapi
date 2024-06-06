@@ -39,12 +39,12 @@ knitr::opts_chunk$set(
 
 ## -----------------------------------------------------------------------------
 #  # for instance, to set custom headers (i.e. to get through a proxy)
-#  client$httr_config(httr::add_headers(MY_MAGIC_HEADER="value"))
+#  client$httr_config(httr::add_headers(MY_MAGIC_HEADER = "value"))
 #  
 #  # or to clear sticky cookies if you want to switch nodes in an HA cluster
 #  client <- connect()
 #  client$server_settings()$hostname
-#  client$httr_config(handle = httr::handle(''))
+#  client$httr_config(handle = httr::handle(""))
 #  
 #  # now you have a chance to get a new host
 #  client$server_settings()$hostname
@@ -54,8 +54,8 @@ knitr::opts_chunk$set(
 
 ## -----------------------------------------------------------------------------
 #  # disables authentication header that is included by default
-#  client$using_auth = FALSE
+#  client$using_auth <- FALSE
 #  
 #  # use Kerberos authentication mechanism (requires local credential cache)
-#  client$httr_config(httr::authenticate(":", "", type="gssnegotiate"))
+#  client$httr_config(httr::authenticate(":", "", type = "gssnegotiate"))
 

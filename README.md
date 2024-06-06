@@ -15,31 +15,10 @@ status](https://github.com/rstudio/connectapi/workflows/R-CMD-check/badge.svg)](
 # connectapi <img src='man/figures/logo.svg' align="right" height="139" />
 
 This package provides an R client for the [Posit Connect Server
-API](https://docs.posit.co/connect/api/) as well as helpful functions
-that utilize the client. The package is based on the `rsconnnect`
-[package](https://rstudio.github.io/rsconnect/), but is publicly
-exported to be easier to use, is extensible via an R6 class, and is
-separated from the `rsconnect` package for easier support and
-maintenance.
-
-## Disclaimer
-
-Because many of these functions are experimental, it is advisable to be
-cautious about (1) upgrading the package, (2) upgrading Posit Connect
-when you care about the reproducibility of workflows that use
-`connectapi`. As a result, we would advise:
-
-- managing package versions with
-  [`renv`](https://rstudio.github.io/renv/)
-- test your dependent content before and after upgrading Posit Connect
-
-Please pay careful attention to the lifecycle badges of the various
-functions and warnings present when you are using experimental features.
-
-**Also, [please share
-feedback!!](https://community.rstudio.com/c/r-admin/posit-connect/27) We
-love hearing how the Posit Connect Server API is helpful and what
-additional endpoints would be useful!!**
+API](https://docs.posit.co/connect/api/), as well as helpful functions
+that utilize the client. It is designed to work with all supported
+versions of Connect, though some features may only be available to newer
+versions.
 
 ## Installation
 
@@ -62,8 +41,8 @@ To create a client:
 ``` r
 library(connectapi)
 client <- connect(
-  server = 'https://connect.example.com',
-  api_key = '<SUPER SECRET API KEY>'
+  server = "https://connect.example.com",
+  api_key = "<SUPER SECRET API KEY>"
 )
 ```
 
@@ -120,16 +99,16 @@ client <- connect()
 # NOTE: a `manifest.json` should already exist from `rsconnect::writeManifest()`
 
 bundle <- bundle_dir("./path/to/directory")
-content <- client %>% 
-  deploy(bundle, name = "my-app-name") %>% 
+content <- client %>%
+  deploy(bundle, name = "my-app-name") %>%
   poll_task()
 
 # set an image for content
 
-content %>% 
+content %>%
   set_image_path("./my/local/image.png")
 
-content %>% 
+content %>%
   set_image_url("http://url.example.com/image.png")
 
 # set image and a vanity URL
@@ -141,13 +120,13 @@ content %>%
 # change access_type to "anyone"
 
 content$update(access_type = "all")
-  
+
 # edit another piece of content
 
 client %>%
   content_item("the-content-guid") %>%
   set_vanity_url("/another-awesome-app")
-  
+
 # migrate content to another server
 
 client_prod <- connect(
@@ -179,12 +158,11 @@ This is likely due to either (1) `Connect$server` or `Connect$api_key`
 being defined improperly or (2) you do not have access to the Posit
 Connect cluster to do the operation in question
 
-**Constant warning about version numbers**
+**Warning about version numbers**
 
-This warning is intentionally chatty. While version number mismatches
-between Posit Connect and `connectapi` can be benign, we want you to be
-clear that `connectapi` is tightly coupled to a version of Posit Connect
-(because Posit Connect’s APIs change over time).
+We test the package against a range of versions of Connect, as old as
+1.8.8.2 (May 2021). If your Connect server is older than that, the
+package may still work, but `connectapi` will warn you.
 
 We strive to:
 
@@ -220,11 +198,11 @@ If you get this error message, our recommendation would be:
 
 Please feel free to open an Issue if you think there is a bug, or ask a
 free-form question on [Posit
-Community](https://community.rstudio.com/c/r-admin/posit-connect/27)
+Community](https://forum.posit.co/c/posit-professional-hosted/posit-connect/27)
 
 **Other ideas for FAQs or Common Issues?**
 
-Please submit a PR! We would love to have your contribution!
+Please open an issue or PR! We would love to have your contribution!
 
 ## Code of Conduct
 

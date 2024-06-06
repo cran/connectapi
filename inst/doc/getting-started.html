@@ -12,7 +12,7 @@
 
 <meta name="author" content="Cole Arendt" />
 
-<meta name="date" content="2023-01-31" />
+<meta name="date" content="2024-06-06" />
 
 <title>Getting Started with connectapi</title>
 
@@ -340,7 +340,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Getting Started with connectapi</h1>
 <h4 class="author">Cole Arendt</h4>
-<h4 class="date">2023-01-31</h4>
+<h4 class="date">2024-06-06</h4>
 
 
 
@@ -352,22 +352,22 @@ server. This requires the URL to your server and an API key. Directions
 on how to get an API key are <a href="https://docs.posit.co/connect/user/api-keys/#api-keys">here</a>.</p>
 <p>Once you have your API key, you can create a Connect object in your
 code, like so:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(connectapi)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>(</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">server =</span> <span class="st">&quot;http://example.com:3939&quot;</span>,</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">api_key =</span> <span class="st">&quot;aihgaahegiahgg&quot;</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(connectapi)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>(</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="at">server =</span> <span class="st">&quot;http://example.com:3939&quot;</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">api_key =</span> <span class="st">&quot;aihgaahegiahgg&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>)</span></code></pre></div>
 <p>The alternative is to define a <code>.Renviron</code> file, which
 specifies environment variables:</p>
 <pre><code>CONNECT_SERVER=http://example.com:3939
 CONNECT_API_KEY=aihgaahegiahgg</code></pre>
 <p>Then, those can be used in your code:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(connectapi)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># this happens by default if you restart your R session</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">readRenviron</span>(<span class="st">&quot;.Renviron&quot;</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">library</span>(connectapi)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co"># this happens by default if you restart your R session</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">readRenviron</span>(<span class="st">&quot;.Renviron&quot;</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>client <span class="ot">&lt;-</span> <span class="fu">connect</span>()</span></code></pre></div>
 </div>
 <div id="content-management" class="section level2">
 <h2>Content Management</h2>
@@ -379,36 +379,36 @@ use the <code>rsconnect</code> package, specifically the
 to deploy.</p>
 <p>Once the <code>manifest.json</code> file is present, you can
 reference the directory and deploy it directly:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>bnd <span class="ot">&lt;-</span> <span class="fu">bundle_dir</span>(<span class="st">&quot;./my/directory&quot;</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># name must be unique on the server</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># if you do not specify it, a random value will be provided</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>content_1 <span class="ot">&lt;-</span> client <span class="sc">%&gt;%</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">deploy</span>(bnd, <span class="at">name =</span> <span class="st">&quot;my-content&quot;</span>, <span class="at">title =</span> <span class="st">&quot;Amazing Report!!&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>bnd <span class="ot">&lt;-</span> <span class="fu">bundle_dir</span>(<span class="st">&quot;./my/directory&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co"># name must be unique on the server</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co"># if you do not specify it, a random value will be provided</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>content_1 <span class="ot">&lt;-</span> client <span class="sc">%&gt;%</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="fu">deploy</span>(bnd, <span class="at">name =</span> <span class="st">&quot;my-content&quot;</span>, <span class="at">title =</span> <span class="st">&quot;Amazing Report!!&quot;</span>)</span></code></pre></div>
 <p>The content object (<code>content_1</code>) includes information
 about the deployment that you just requested. This can be explored
 with:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>content_1 <span class="sc">%&gt;%</span> <span class="fu">poll_task</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>content_1 <span class="sc">%&gt;%</span> <span class="fu">poll_task</span>()</span></code></pre></div>
 <p>Alternatively, you can immediately begin altering the settings of the
 content object while you wait for deployment to complete:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>content_1 <span class="sc">%&gt;%</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_image_url</span>(<span class="st">&quot;https://gph.is/29vyb0s&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_vanity_url</span>(<span class="st">&quot;/my_clever_content&quot;</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># ensure the vanity URL is set as expected</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>content_1 <span class="sc">%&gt;%</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_vanity_url</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>content_1 <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="fu">set_image_url</span>(<span class="st">&quot;https://gph.is/29vyb0s&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">set_vanity_url</span>(<span class="st">&quot;/my_clever_content&quot;</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># ensure the vanity URL is set as expected</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>content_1 <span class="sc">%&gt;%</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="fu">get_vanity_url</span>()</span></code></pre></div>
 <p>If you have content that already exists and you want to update it,
 you can do so using the content GUID (which you can find within Posit
 Connect in the Info pane).</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>content_2 <span class="ot">&lt;-</span> client <span class="sc">%&gt;%</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">deploy</span>(bnd, <span class="at">guid =</span> <span class="st">&quot;d78ba9f8-bb57-422e-b164-9ecd8e4c4fd6&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">poll_task</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>content_2 <span class="ot">&lt;-</span> client <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="fu">deploy</span>(bnd, <span class="at">guid =</span> <span class="st">&quot;d78ba9f8-bb57-422e-b164-9ecd8e4c4fd6&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">poll_task</span>()</span></code></pre></div>
 <p>You can also use the Posit Connect content GUID to retrieve
 information about existing content (if you want to examine or change
 settings)</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>content_3 <span class="ot">&lt;-</span> client <span class="sc">%&gt;%</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">content_item</span>(<span class="at">guid =</span> <span class="st">&quot;96532fbc-725e-441b-9cc6-a5622535241b&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>content_3 <span class="ot">&lt;-</span> client <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="fu">content_item</span>(<span class="at">guid =</span> <span class="st">&quot;96532fbc-725e-441b-9cc6-a5622535241b&quot;</span>)</span></code></pre></div>
 </div>
 
 

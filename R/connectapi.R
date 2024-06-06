@@ -1,6 +1,10 @@
-#' @importFrom utils compareVersion
-#' @importFrom utils untar
+#' @importFrom utils compareVersion untar
+#' @importFrom lifecycle deprecate_warn
+#' @importFrom rlang arg_match
 "_PACKAGE"
+
+# Even if we don't currently have any references to functions in lifecycle,
+# we have to include it in Imports because we use it in RdMacros
 
 utils::globalVariables(
   c(
@@ -8,6 +12,7 @@ utils::globalVariables(
     "access_type",
     "connectapi_ptypes",
     "guid",
+    "last_deployed_time",
     "owner_guid",
     "parse_connectapi_typed",
     "permission",
@@ -18,4 +23,9 @@ utils::globalVariables(
   )
 )
 
-current_connect_version <- '2022.09.0'
+current_connect_version <- "2024.03.0"
+
+.onLoad <- function(...) {
+  vctrs::s3_register("dplyr::collect", "tbl_connect")
+  invisible()
+}

@@ -21,19 +21,13 @@ make_timestamp <- function(input) {
   safe_format(input, "%Y-%m-%dT%H:%M:%SZ")
 }
 
-swap_timestamp_format <- function(.col) {
-  if (is.character(.col)) {
-    gsub("([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}\\.*[0-9]*Z)", "\\1 \\2", .col)
-  } else {
-    .col
-  }
-}
-
-ensure_columns <- function(.data, ...) {
-  defaults <- rlang::list2(...)
-  names <- names(defaults)
-  for (i in seq_along(defaults)) {
-    .data <- ensure_column(.data, defaults[[i]], names[[i]])
+ensure_columns <- function(.data, ptype) {
+  # Given a prototype, ensure that all columns are present and cast to the correct type.
+  # If a column is missing in .data, it will be created with all missing values of the correct type.
+  # If a column is present in both, it will be cast to the correct type.
+  # If a column is present in .data but not in ptype, it will be left as is.
+  for (i in names(ptype)) {
+    .data <- ensure_column(.data, ptype[[i]], i)
   }
   .data
 }
@@ -46,7 +40,6 @@ ensure_column <- function(data, default, name) {
     col <- vctrs::vec_rep(default, nrow(data))
     col <- vctrs::vec_cast(col, default)
   } else {
-    col <- swap_timestamp_format(col)
     if (vctrs::vec_is(default, NA_datetime_) && !vctrs::vec_is(col, NA_datetime_)) {
       # manual fix because vctrs::vec_cast cannot cast double -> datetime or char -> datetime
       col <- coerce_datetime(col, default, name = name)
@@ -57,14 +50,17 @@ ensure_column <- function(data, default, name) {
     if (inherits(default, "integer64") && !inherits(col, "integer64")) {
       col <- bit64::as.integer64(col)
     }
+    if (inherits(default, "list") && !inherits(col, "list")) {
+      col <- list(col)
+    }
     col <- vctrs::vec_cast(col, default)
   }
   data[[name]] <- col
   data
 }
 
-parse_connectapi_typed <- function(data, ...) {
-  ensure_columns(parse_connectapi(data), ...)
+parse_connectapi_typed <- function(data, ptype) {
+  ensure_columns(parse_connectapi(data), ptype)
 }
 
 parse_connectapi <- function(data) {
@@ -91,38 +87,6 @@ parse_connectapi <- function(data) {
   ))
 }
 
-#' @export
-vec_cast.fs_bytes.integer <- function(x, to, ...) {
-  warn_experimental("vec_cast.fs_bytes")
-  fs::as_fs_bytes(x)
-}
-
-#' @export
-vec_cast.fs_bytes.default <- function(x, to, ...) {
-  vctrs::vec_default_cast(x = x, to = to)
-}
-
-#' Cast to fs_bytes
-#'
-#' \lifecycle{deprecated}
-#' This is a temporary placeholder because the functionality
-#' does not exist yet in the `fs` package. Do not build dependencies
-#' on `connectapi::vec-cast.fs_bytes`, as it will be removed without
-#' warning in a future release.
-#'
-#' @param x Vectors to cast
-#' @param to Type to cast to. If `NULL`, `x` will be returned as is
-#' @param ... Dots for future extensions and should be empty
-#'
-#' @return A vector the same length as `x` with the same type as `to`, or an
-#'   error if the cast is not possible.
-#'
-#' @export
-vec_cast.fs_bytes <- function(x, to, ...) {
-  warn_experimental("vec_cast.fs_bytes")
-  UseMethod("vec_cast.fs_bytes")
-}
-
 coerce_fsbytes <- function(x, to, ...) {
   if (is.numeric(x)) {
     fs::as_fs_bytes(x)
@@ -137,10 +101,14 @@ coerce_datetime <- function(x, to, ...) {
   if (is.null(tmp_name) || is.na(tmp_name) || !is.character(tmp_name)) {
     tmp_name <- "x"
   }
-  if (is.numeric(x)) {
+
+  if (is.null(x)) {
+    as.POSIXct(character(), tz = tzone(to))
+  } else if (is.numeric(x)) {
     vctrs::new_datetime(as.double(x), tzone = tzone(to))
   } else if (is.character(x)) {
-    as.POSIXct(x, tz = tzone(to))
+    # Parse as ISO8601
+    as.POSIXct(strptime(x, format = "%Y-%m-%dT%H:%M:%SZ"), tz = tzone(to))
   } else if (inherits(x, "POSIXct")) {
     x
   } else if (all(is.logical(x) & is.na(x)) && length(is.logical(x) & is.na(x)) > 0) {
