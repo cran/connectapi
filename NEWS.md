@@ -1,3 +1,35 @@
+# connectapi 0.3.0
+
+## Breaking changes
+
+- `GET_URL()`, `GET_RESULT()`, and `GET_RESULT_URL()` have been eliminated in
+  favor of `GET()` (#274).
+- The `.empty_object` argument has been removed from `PUT`/`PATCH`/`POST` (#274).
+
+## New features
+
+- New `content_render()` and `content_restart()` functions. `content_render()`
+  allows you to programmatically re-render content such as Quarto and R Markdown
+  reports and Jupyter notebooks, optionally passing in a `variant_key` to render
+  a specific variant of parameterized content. `content_restart()` lets you
+  restart interactive content, such as Shiny applications, APIs, or dashboards
+  (#283, #289)
+- New `get_oauth_credentials()` function for interacting with Connect's
+  `/v1/oauth/integrations/credentials` endpoint. This endpoint allows content
+  running on Posit Connect to obtain the content viewer's OAuth access token
+  (#297).
+
+## Minor improvements and fixes
+
+- Timestamps with non-zero offsets received from Connect no longer parse as `NA`
+  (#290).
+- Timestamps sent to Connect are now correctly converted to UTC, instead of
+  simply being labeled as GMT (#291).
+- Functions to render variants and email reports now contain the request
+  query that Connect expects (#277).
+- HTTP verb functions can take any URL, not just one relative to API root, and
+  can optionally return the `httr_response` object (#274).
+
 # connectapi 0.2.0
 
 ## Breaking changes

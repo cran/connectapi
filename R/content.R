@@ -47,7 +47,7 @@ Content <- R6::R6Class(
     #' @param overwrite Overwrite an existing filename.
     bundle_download = function(bundle_id, filename = tempfile(pattern = "bundle", fileext = ".tar.gz"), overwrite = FALSE) {
       url <- v1_url("content", self$get_content()$guid, "bundles", bundle_id, "download")
-      self$get_connect()$GET(url, httr::write_disk(filename, overwrite = overwrite), "raw")
+      self$get_connect()$GET(url, httr::write_disk(filename, overwrite = overwrite), parser = "raw")
       return(filename)
     },
     #' @description Delete a content bundle.
@@ -66,20 +66,19 @@ Content <- R6::R6Class(
     update = function(...) {
       con <- self$get_connect()
       error_if_less_than(con, "1.8.6")
-      params <- rlang::list2(...)
       url <- v1_url("content", self$get_content()$guid)
-      res <- con$PATCH(
-        url,
-        params
-      )
-      return(self)
+      body <- rlang::list2(...)
+      if (length(body)) {
+        # Only need to make a request if there are changes
+        con$PATCH(url, body = body)
+      }
+      self
     },
     #' @description Delete this content item.
     danger_delete = function() {
       con <- self$get_connect()
       url <- v1_url("content", self$get_content()$guid)
-      res <- con$DELETE(url)
-      return(res)
+      con$DELETE(url)
     },
     #' @description Return the URL for this content.
     get_url = function() {
@@ -184,18 +183,18 @@ Content <- R6::R6Class(
           principal_type = "user",
           role = "owner"
         )
-        return(c(res, list(owner_entry)))
+        res <- c(res, list(owner_entry))
       }
-      return(res)
+      res
     },
     #' @description Return the environment variables set for this content.
     environment = function() {
       url <- v1_url("content", self$get_content()$guid, "environment")
-      res <- self$get_connect()$GET(url)
-      return(res)
+      self$get_connect()$GET(url)
     },
     #' @description Adjust the environment variables set for this content.
-    #' @param ... Environment variable names and values.
+    #' @param ... Environment variable names and values. Use `NA` as the value
+    #' to unset variables.
     environment_set = function(...) {
       url <- v1_url("content", self$get_content()$guid, "environment")
       # post with
@@ -207,11 +206,7 @@ Content <- R6::R6Class(
       })
       names(body) <- NULL
 
-      res <- self$get_connect()$PATCH(
-        path = url,
-        body = body
-      )
-      res
+      self$get_connect()$PATCH(path = url, body = body)
     },
     #' @description Overwrite the environment variables set for this content.
     #' @param ... Environment variable names and values.
@@ -219,18 +214,18 @@ Content <- R6::R6Class(
       url <- v1_url("content", self$get_content()$guid, "environment")
 
       vals <- rlang::list2(...)
-      body <- purrr::imap(vals, function(.x, .y) {
-        # TODO: evaluate whether we should be coercing to character or erroring
-        return(list(name = .y, value = as.character(.x)))
-      })
-      names(body) <- NULL
+      if (length(vals) == 0) {
+        # Make sure we send an empty array and not an empty list
+        body <- "[]"
+      } else {
+        body <- purrr::imap(vals, function(.x, .y) {
+          # TODO: evaluate whether we should be coercing to character or erroring
+          return(list(name = .y, value = as.character(.x)))
+        })
+        names(body) <- NULL
+      }
 
-      res <- self$get_connect()$PUT(
-        path = url,
-        body = body,
-        .empty_object = FALSE
-      )
-      res
+      self$get_connect()$PUT(path = url, body = body)
     },
     #' @description Deploy this content
     #' @param bundle_id Target bundle identifier.
@@ -278,6 +273,36 @@ Content <- R6::R6Class(
       cat('content_item(client, guid = "', self$get_content()$guid, '")', "\n", sep = "")
       cat("\n")
       invisible(self)
+    }
+  ),
+  active = list(
+    #' @field default_variant The default variant for this object.
+    default_variant = function() {
+      get_variant(self, "default")
+    },
+
+    #' @field is_rendered TRUE if this is a rendered content type, otherwise FALSE.
+    is_rendered = function() {
+      self$content$app_mode %in% c("rmd-static", "jupyter-static", "quarto-static")
+    },
+  
+    #' @field is_interactive TRUE if this is a rendered content type, otherwise FALSE.
+    is_interactive = function() {
+      interactive_app_modes <- c(
+        "shiny",
+        "rmd-shiny",
+        "jupyter-voila",
+        "python-api",
+        "python-dash",
+        "python-streamlit",
+        "python-bokeh",
+        "python-fastapi",
+        "python-shiny",
+        "quarto-shiny",
+        "tensorflow-saved-model",
+        "api"
+      )
+      self$content$app_mode %in% interactive_app_modes
     }
   )
 )
@@ -929,4 +954,80 @@ get_content_permissions <- function(content, add_owner = TRUE) {
   validate_R6_class(content, "Content")
   res <- content$permissions(add_owner = add_owner)
   parse_connectapi_typed(res, connectapi_ptypes$permissions)
+}
+
+#' Render a content item.
+#' 
+#' @description Submit a request to render a content item. Once submitted, the
+#' server runs an asynchronous process to render the content. This might be
+#' useful if content needs to be updated after its source data has changed,
+#' especially if this doesn't happen on a regular schedule.
+#' 
+#' Only valid for rendered content (e.g., most Quarto documents, Jupyter
+#' notebooks, R Markdown reports).
+#' 
+#' @param content The content item you wish to render.
+#' @param variant_key If a variant key is provided, render that variant. Otherwise, render the default variant.
+#' @return A [VariantTask] object that can be used to track completion of the render.
+#' 
+#' @examples
+#' \dontrun{
+#' client <- connect()
+#' item <- content_item(client, "951bf3ad-82d0-4bca-bba8-9b27e35c49fa")
+#' task <- content_render(item)
+#' poll_task(task)
+#' }
+#' 
+#' @export
+content_render <- function(content, variant_key = NULL) {
+  scoped_experimental_silence()
+  validate_R6_class(content, "Content")
+  if (!content$is_rendered) {
+    stop(glue::glue("Render not supported for application mode: {content$content$app_mode}. Did you mean content_restart()?"))
+  }
+  if (is.null(variant_key)) {
+    target_variant <- get_variant(content, "default")
+  } else {
+    target_variant <- get_variant(content, variant_key)
+  }
+  render_task <- target_variant$render()
+
+  VariantTask$new(connect = content$connect, content = content$content, key = target_variant$key, task = render_task)
+}
+
+#' Restart a content item.
+#' 
+#' @description Submit a request to restart a content item. Once submitted, the
+#' server performs an asynchronous request to kill all processes associated with
+#' the content item, starting new processes as needed. This might be useful if
+#' the application relies on data that is loaded at startup, or if its memory
+#' usage has grown over time.
+#' 
+#' Note that users interacting with certain types of applications may have their
+#' workflows interrupted.
+#' 
+#' Only valid for interactive content (e.g., applications, APIs).
+#' 
+#' @param content The content item you wish to restart.
+#' 
+#' @examples
+#' \dontrun{
+#' client <- connect()
+#' item <- content_item(client, "8f37d6e0-3395-4a2c-aa6a-d7f2fe1babd0")
+#' content_restart(item)
+#' }
+#' 
+#' @importFrom rlang :=
+#' @export
+content_restart <- function(content) {
+  validate_R6_class(content, "Content")
+  if (!content$is_interactive) {
+    stop(glue::glue("Restart not supported for application mode: {content$content$app_mode}. Did you mean content_render()?"))
+  }
+  unix_epoch_in_seconds <- as.integer(Sys.time())
+  env_var_name <- glue::glue("_CONNECT_RESTART_{unix_epoch_in_seconds}")
+  # https://rlang.r-lib.org/reference/glue-operators.html#using-glue-syntax-in-packages
+  content$environment_set("{env_var_name}" := unix_epoch_in_seconds)
+  content$environment_set("{env_var_name}" := NA)
+  invisible(NULL)
 }

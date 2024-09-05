@@ -29,11 +29,14 @@ Variant <- R6::R6Class(
     #' @param key The variant key.
     initialize = function(connect, content, key) {
       super$initialize(connect = connect, content = content)
-      self$key <- key
       # TODO: a better way to GET self
       all_variants <- self$variants()
-      this_variant <- purrr::keep(all_variants, ~ .x$key == key)[[1]]
-      self$variant <- this_variant
+      if (identical(key, "default")) {
+        self$variant <- purrr::keep(all_variants, ~ .x[["is_default"]])[[1]]
+      } else {
+        self$variant <- purrr::keep(all_variants, ~ .x$key == key)[[1]]
+      }
+      self$key <- self$variant$key
     },
     #' @description Mail previously rendered content.
     #' @param to Targeting.
@@ -42,8 +45,9 @@ Variant <- R6::R6Class(
       url <- unversioned_url("variants", self$get_variant()$id, "sender")
       self$get_connect()$POST(
         path = url,
-        body = list(
-          email = arg_match(to)
+        query = list(
+          email = arg_match(to),
+          rendering_id = self$get_variant()$rendering_id
         )
       )
     },
@@ -93,15 +97,8 @@ Variant <- R6::R6Class(
     #' @description Render this variant.
     render = function() {
       warn_experimental("render")
-      # TODO: why both in query AND in body?
-      path <- unversioned_url("variants", self$get_variant()$id, "render?email=none&activate=true")
-      res <- self$get_connect()$POST(
-        path = path,
-        body = list(
-          email = "none",
-          activate = TRUE
-        )
-      )
+      path <- unversioned_url("variants", self$get_variant()$id, "render")
+      res <- self$get_connect()$POST(path)
 
       # add the content guid and variant key
       content_guid <- self$get_content()$guid
@@ -129,7 +126,7 @@ Variant <- R6::R6Class(
       params <- rlang::list2(...)
       # TODO: allow updating a variant
       url <- unversioned_url("variants", self$get_variant()$id)
-      res <- self$get_connect()$POST(url, params)
+      res <- self$get_connect()$POST(url, body = params)
       return(self)
     },
     #' @description Jobs for this variant.
@@ -237,7 +234,7 @@ VariantTask <- R6::R6Class(
 #' \lifecycle{experimental} Work with variants
 #'
 #' - `get_variants()` returns a `tibble` with variant data for a `content_item`
-#' - `get_default_variant()` returns the default variant for a `content_item`
+#' - `get_variant_default()` returns the default variant for a `content_item`
 #' - `get_variant()` returns a specific variant for a `content_item` (specified by `key`)
 #'
 #' @param content An R6 Content object. Returned from `content_item()`
@@ -260,25 +257,18 @@ get_variants <- function(content) {
 #' @rdname variant
 #' @family variant functions
 #' @export
-get_variant_default <- function(content) {
-  warn_experimental("get_variant_default")
+get_variant <- function(content, key) {
+  warn_experimental("get_variant")
   scoped_experimental_silence()
   validate_R6_class(content, "Content")
-  all_variants <- content$variants()
-  the_default <- purrr::keep(all_variants, ~ .x[["is_default"]])[[1]]
-  variant <- Variant$new(connect = content$get_connect(), content = content$get_content(), key = the_default$key)
-  return(variant)
+  Variant$new(connect = content$get_connect(), content = content$get_content(), key = key)
 }
 
 #' @rdname variant
 #' @family variant functions
 #' @export
-get_variant <- function(content, key) {
-  warn_experimental("get_variant")
-  scoped_experimental_silence()
-  validate_R6_class(content, "Content")
-  variant <- Variant$new(connect = content$get_connect(), content = content$get_content(), key = key)
-  return(variant)
+get_variant_default <- function(content) {
+  get_variant(content, "default")
 }
 
 #' Render a Variant
@@ -291,7 +281,7 @@ get_variant <- function(content, key) {
 #'
 #' @param variant An R6 Variant object. As returned by `get_variant()` or `get_variant_default()`
 #'
-#' @rdname render
+#' @rdname variant_render
 #' @family variant functions
 #' @export
 get_variant_renderings <- function(variant) {
@@ -303,7 +293,7 @@ get_variant_renderings <- function(variant) {
   parse_connectapi_typed(renders, connectapi_ptypes$rendering)
 }
 
-#' @rdname render
+#' @rdname variant_render
 #' @export
 variant_render <- function(variant) {
   warn_experimental("variant_render")
