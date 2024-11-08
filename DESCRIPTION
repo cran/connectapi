@@ -1,7 +1,7 @@
 Type: Package
 Package: connectapi
 Title: Utilities for Interacting with the 'Posit Connect' Server API
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: c(
     person(given = "Toph",
            family = "Allen",
@@ -15,8 +15,7 @@ Authors@R: c(
            role = c("aut")),
     person(given = "Cole",
            family = "Arendt",
-           role = c("aut"),
-           email = "cole@posit.co"),
+           role = c("aut")),
     person(given = "Posit, PBC",
            role = c("cph", "fnd")))
 Description: Provides a helpful 'R6' class and methods for interacting with
@@ -28,19 +27,18 @@ License: MIT + file LICENSE
 URL: https://pkgs.rstudio.com/connectapi/,
         https://github.com/rstudio/connectapi
 BugReports: https://github.com/rstudio/connectapi/issues
-Imports: bit64, fs, glue, httr, jsonlite, lifecycle, magrittr, purrr,
-        R6, rlang (>= 0.4.2), tibble, uuid, vctrs (>= 0.3.0)
+Imports: bit64, fs, glue, httr, mime, jsonlite, lifecycle, magrittr,
+        purrr, R6, rlang (>= 0.4.2), tibble, uuid, vctrs (>= 0.3.0)
 Suggests: covr, dbplyr, dplyr, ggplot2, gridExtra, httptest, knitr,
         lubridate, progress, rmarkdown, rprojroot, rsconnect, spelling,
         testthat, webshot2, withr
 VignetteBuilder: knitr
-RdMacros: lifecycle
 Encoding: UTF-8
 Language: en-US
 RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-09-04 18:50:07 UTC; toph
+Packaged: 2024-11-08 23:12:49 UTC; toph
 Author: Toph Allen [aut, cre],
   Neal Richardson [aut],
   Sean Lopp [aut],
@@ -48,4 +46,4 @@ Author: Toph Allen [aut, cre],
   Posit, PBC [cph, fnd]
 Maintainer: Toph Allen <toph@posit.co>
 Repository: CRAN
-Date/Publication: 2024-09-05 14:50:16 UTC
+Date/Publication: 2024-11-08 23:30:03 UTC

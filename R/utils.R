@@ -12,49 +12,52 @@ valid_page_size <- function(x, min = 1, max = 500) {
   min(max(min, x), max)
 }
 
-generate_R6_print_output <- function() {
-  con <- Connect$new(server = "http://test_host", api_key = "test_key")
-  bnd <- Bundle$new(path = "/test/path")
+generate_R6_print_output <- # nolint: object_name_linter
+  function() {
+    con <- Connect$new(server = "http://test_host", api_key = "test_key")
+    bnd <- Bundle$new(path = "/test/path")
 
-  ex_content <- list(guid = "content-guid", title = "content-title", url = "http://content-url")
-  cnt1 <- Content$new(connect = con, ex_content)
+    ex_content <- list(guid = "content-guid", title = "content-title", url = "http://content-url")
+    cnt1 <- Content$new(connect = con, ex_content)
 
-  ex_task <- list(task_id = "task-id")
-  tsk1 <- ContentTask$new(connect = con, content = ex_content, task = ex_task)
+    ex_task <- list(task_id = "task-id")
+    tsk1 <- ContentTask$new(connect = con, content = ex_content, task = ex_task)
 
-  ex_vanity <- list(path_prefix = "vanity-prefix")
-  van1 <- Vanity$new(connect = con, content = ex_content, vanity = ex_vanity)
+    ex_vanity <- list(path_prefix = "vanity-prefix")
+    van1 <- Vanity$new(connect = con, content = ex_content, vanity = ex_vanity)
 
-  obj_list <- list(con, bnd, cnt1, tsk1, van1)
+    obj_list <- list(con, bnd, cnt1, tsk1, van1)
 
-  unlist(mapply(
-    function(.x, .y) {
-      c(
-        "----------------------------",
-        .y,
-        "----------------------------",
-        capture.output(print(.x))
-      )
-    },
-    .x = obj_list,
-    .y = lapply(obj_list, function(x) {
-      class(x)[[1]]
-    }),
-    SIMPLIFY = FALSE
-  ))
-}
-
-is_R6_class <- function(instance, class) {
-  return(R6::is.R6(instance) && inherits(instance, class))
-}
-
-validate_R6_class <- function(instance, class) {
-  obj <- rlang::enquo(instance)
-  if (!R6::is.R6(instance) | !inherits(instance, class)) {
-    stop(paste(rlang::quo_text(obj), "must be an R6", glue::glue_collapse(class, sep = " or "), "object"))
+    unlist(mapply(
+      function(.x, .y) {
+        c(
+          "----------------------------",
+          .y,
+          "----------------------------",
+          capture.output(print(.x))
+        )
+      },
+      .x = obj_list,
+      .y = lapply(obj_list, function(x) {
+        class(x)[[1]]
+      }),
+      SIMPLIFY = FALSE
+    ))
   }
-  invisible(TRUE)
-}
+
+is_R6_class <- # nolint: object_name_linter
+  function(instance, class) {
+    return(R6::is.R6(instance) && inherits(instance, class))
+  }
+
+validate_R6_class <- # nolint: object_name_linter
+  function(instance, class) {
+    obj <- rlang::enquo(instance)
+    if (!R6::is.R6(instance) || !inherits(instance, class)) {
+      stop(paste(rlang::quo_text(obj), "must be an R6", glue::glue_collapse(class, sep = " or "), "object"))
+    }
+    invisible(TRUE)
+  }
 
 # super useful examples
 # https://github.com/tidyverse/tibble/blob/master/R/compat-lifecycle.R
@@ -134,20 +137,25 @@ safe_server_version <- function(client) {
   version <- safe_server_settings(client)$version
   if (is.null(version) || nchar(version) == 0) {
     message("Version information is not exposed by this Posit Connect instance.")
-    # Return 0 so this will always show up as "too old"
-    version <- "0"
+    version <- NA
   }
   version
 }
 
-error_if_less_than <- function(client, tested_version) {
-  server_version <- safe_server_version(client)
-  comp <- compare_connect_version(server_version, tested_version)
-  if (comp < 0) {
-    msg <- paste0(
-      "ERROR: This API requires Posit Connect version ", tested_version,
-      " but you are using", server_version, ". Please use a previous version",
-      " of the `connectapi` package, upgrade Posit Connect, or review the API ",
+error_if_less_than <- function(using_version, tested_version) {
+  comp <- compare_connect_version(using_version, tested_version)
+  if (is.na(comp)) {
+    msg <- glue::glue(
+      "WARNING: This API requires Posit Connect version {tested_version} ",
+      "but the server version is not exposed by this Posit Connect instance. ",
+      "You may be experience errors when using this functionality."
+    )
+    warn_once(msg)
+  } else if (comp < 0) {
+    msg <- glue::glue(
+      "ERROR: This API requires Posit Connect version {tested_version} ",
+      "but you are using {using_version}. Please use a previous version ",
+      "of the `connectapi` package, upgrade Posit Connect, or review the API ",
       "documentation corresponding to your version."
     )
     stop(msg)
@@ -156,12 +164,15 @@ error_if_less_than <- function(client, tested_version) {
 }
 
 compare_connect_version <- function(using_version, tested_version) {
+  if (is.na(using_version)) {
+    return(NA)
+  }
   compareVersion(simplify_version(using_version), simplify_version(tested_version))
 }
 
-check_connect_version <- function(using_version, minimum_tested_version = "1.8.8.2") {
+warn_untested_connect <- function(using_version, minimum_tested_version = "1.8.8.2") {
   comp <- compare_connect_version(using_version, minimum_tested_version)
-  if (comp < 0) {
+  if (isTRUE(comp < 0)) {
     warn_once(glue::glue(
       "You are using an older version of Posit Connect ",
       "({using_version}) than is tested ({minimum_tested_version}). ",

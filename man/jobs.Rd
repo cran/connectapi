@@ -15,7 +15,7 @@ get_job(content, key)
 \item{key}{The key for a job}
 }
 \description{
-\lifecycle{experimental} Retrieve details about jobs associated with a \code{content_item}.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} Retrieve details about jobs associated with a \code{content_item}.
 "Jobs" in Posit Connect are content executions
 }
 \seealso{
@@ -27,16 +27,20 @@ Other content functions:
 \code{\link{create_random_name}()},
 \code{\link{dashboard_url}()},
 \code{\link{dashboard_url_chr}()},
+\code{\link{delete_thumbnail}()},
 \code{\link{delete_vanity_url}()},
 \code{\link{deploy_repo}()},
 \code{\link{get_bundles}()},
 \code{\link{get_environment}()},
 \code{\link{get_image}()},
+\code{\link{get_thumbnail}()},
 \code{\link{get_vanity_url}()},
 \code{\link{git}},
+\code{\link{has_thumbnail}()},
 \code{\link{permissions}},
 \code{\link{set_image_path}()},
 \code{\link{set_run_as}()},
+\code{\link{set_thumbnail}()},
 \code{\link{set_vanity_url}()},
 \code{\link{swap_vanity_url}()},
 \code{\link{verify_content_name}()}

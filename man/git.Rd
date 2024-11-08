@@ -26,14 +26,16 @@ repo_check_manifest_dirs(client, repository, branch)
 \item{branch}{The git branch to explore for subdirectories}
 }
 \description{
-\lifecycle{experimental} These functions help use Posit Connect's configured authorization to query
-available branches and subdirectories for deployment using \code{deploy_repo()}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} These functions help use Posit Connect's
+configured authorization to query available branches and subdirectories for
+deployment using \code{deploy_repo()}
 }
 \details{
 \itemize{
 \item \code{repo_check_account()} messages whether an account is in use, and then returns that account
 \item \code{repo_check_branches()} retrieves which branches are available, returning in a named list
-\item \code{repo_check_manifest_dirs()} retrieves which directories contain a \code{manifest.json}, returning in a named list
+\item \code{repo_check_manifest_dirs()} retrieves which directories contain a
+\code{manifest.json}, returning in a named list
 }
 }
 \seealso{
@@ -47,16 +49,20 @@ Other content functions:
 \code{\link{create_random_name}()},
 \code{\link{dashboard_url}()},
 \code{\link{dashboard_url_chr}()},
+\code{\link{delete_thumbnail}()},
 \code{\link{delete_vanity_url}()},
 \code{\link{deploy_repo}()},
 \code{\link{get_bundles}()},
 \code{\link{get_environment}()},
 \code{\link{get_image}()},
 \code{\link{get_jobs}()},
+\code{\link{get_thumbnail}()},
 \code{\link{get_vanity_url}()},
+\code{\link{has_thumbnail}()},
 \code{\link{permissions}},
 \code{\link{set_image_path}()},
 \code{\link{set_run_as}()},
+\code{\link{set_thumbnail}()},
 \code{\link{set_vanity_url}()},
 \code{\link{swap_vanity_url}()},
 \code{\link{verify_content_name}()}

@@ -43,13 +43,14 @@ deploy_repo_update(content)
 A ContentTask object, for use with \code{poll_task()} (if you want to follow the logs)
 }
 \description{
-\lifecycle{experimental} Deploy a git repository directly to Posit Connect,
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} Deploy a git repository directly to Posit Connect,
 using Posit Connect's "pull-based" "git-polling" method of deployment.
 }
 \details{
 \itemize{
 \item \code{deploy_repo_enable()} enables (or disables) Posit Connect's git polling for a piece of content
-\item \code{deploy_repo_update()} triggers an update of the content from its git repository, if any are present
+\item \code{deploy_repo_update()} triggers an update of the content from its git
+repository, if any are present
 }
 }
 \seealso{
@@ -63,16 +64,20 @@ Other content functions:
 \code{\link{create_random_name}()},
 \code{\link{dashboard_url}()},
 \code{\link{dashboard_url_chr}()},
+\code{\link{delete_thumbnail}()},
 \code{\link{delete_vanity_url}()},
 \code{\link{get_bundles}()},
 \code{\link{get_environment}()},
 \code{\link{get_image}()},
 \code{\link{get_jobs}()},
+\code{\link{get_thumbnail}()},
 \code{\link{get_vanity_url}()},
 \code{\link{git}},
+\code{\link{has_thumbnail}()},
 \code{\link{permissions}},
 \code{\link{set_image_path}()},
 \code{\link{set_run_as}()},
+\code{\link{set_thumbnail}()},
 \code{\link{set_vanity_url}()},
 \code{\link{swap_vanity_url}()},
 \code{\link{verify_content_name}()}

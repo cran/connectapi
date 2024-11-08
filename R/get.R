@@ -55,11 +55,14 @@ get_users <- function(src, page_size = 500, prefix = NULL, limit = Inf) {
 
 #' Get group information from the Posit Connect server
 #'
-#' @param src The source object
-#' @param page_size the number of records to return per page (max 500)
+#' @param src The source object.
+#' @param page_size The number of records to return per page (max 500).
 #' @param prefix Filters groups by prefix (group name).
 #' The filter is case insensitive.
-#' @param limit The max number of groups to return
+#' @param limit The number of groups to retrieve before paging stops.
+#'
+#' `limit` will be ignored is `prefix` is not `NULL`.
+#' To limit results when `prefix` is not `NULL`, change `page_size`.
 #'
 #' @return
 #' A tibble with the following columns:
@@ -71,7 +74,7 @@ get_users <- function(src, page_size = 500, prefix = NULL, limit = Inf) {
 #'     will always be null.
 #'
 #' @details
-#' Please see https://docs.posit.co/connect/api/#getGroups for more information.
+#' Please see https://docs.posit.co/connect/api/#get-/v1/groups for more information.
 #'
 #' @examples
 #' \dontrun{
@@ -86,7 +89,15 @@ get_users <- function(src, page_size = 500, prefix = NULL, limit = Inf) {
 get_groups <- function(src, page_size = 500, prefix = NULL, limit = Inf) {
   validate_R6_class(src, "Connect")
 
-  res <- page_offset(src, src$groups(page_size = page_size, prefix = prefix), limit = limit)
+  # The `v1/groups` endpoint always returns the first page when `prefix` is
+  # specified, so the page_offset function, which increments until it hits an
+  # empty page, fails.
+  if (!is.null(prefix)) {
+    response <- src$groups(page_size = page_size, prefix = prefix)
+    res <- response$results
+  } else {
+    res <- page_offset(src, src$groups(page_size = page_size, prefix = NULL), limit = limit)
+  }
 
   out <- parse_connectapi_typed(res, connectapi_ptypes$groups)
 
@@ -120,8 +131,8 @@ get_groups <- function(src, page_size = 500, prefix = NULL, limit = Inf) {
 #'   * `guid`: The user's GUID, or unique identifier, in UUID RFC4122 format
 #'
 #' @details
-#' Please see https://docs.posit.co/connect/api/#getGroupMembers for more
-#' information.
+#' Please see https://docs.posit.co/connect/api/#get-/v1/groups/-group_guid-/members
+#' for more information.
 #'
 #' @examples
 #' \dontrun{
@@ -153,8 +164,9 @@ get_group_members <- function(src, guid) {
 #' @param guid The guid for a particular content item
 #' @param owner_guid The unique identifier of the user who owns the content
 #' @param name The content name specified when the content was created
-#' @param ... Extra arguments. Currently not used
-#' @param .p Optional. A predicate function, passed as-is to `purrr::keep()` before turning the response into a tibble. Can be useful for performance
+#' @param ... Extra arguments. Currently not used.
+#' @param .p Optional. A predicate function, passed as-is to `purrr::keep()`
+#'   before turning the response into a tibble. Can be useful for performance.
 #'
 #' @return
 #' A tibble with the following columns:
@@ -285,16 +297,10 @@ get_content <- function(src, guid = NULL, owner_guid = NULL, name = NULL, ..., .
   return(out)
 }
 
-.make_predicate <- function(.expr) {
-  function(.x) {
-    masked_expr <- rlang::enexpr(.expr)
-  }
-}
-
 
 #' Get Content List with Permissions
 #'
-#' \lifecycle{experimental} These functions are experimental placeholders until the API supports
+#' `r lifecycle::badge('experimental')` These functions are experimental placeholders until the API supports
 #' this behavior.
 #'
 #' `content_list_with_permissions` loops through content and retrieves
@@ -345,7 +351,7 @@ content_list_with_permissions <- function(src, ..., .p = NULL) {
 
 #' Content List
 #'
-#' \lifecycle{experimental} Get a content list
+#' `r lifecycle::badge('experimental')` Get a content list
 #'
 #' `content_list_by_tag()` retrieves a content list by tag
 #'
@@ -418,8 +424,8 @@ content_list_guid_has_access <- function(content_list, guid) {
 #'     Guide explains how to interpret data_version values.
 #'
 #' @details
-#' Please see https://docs.posit.co/connect/api/#getShinyAppUsage for more
-#' information.
+#' Please see https://docs.posit.co/connect/api/#get-/v1/instrumentation/shiny/usage
+#' for more information.
 #'
 #' @examples
 #' \dontrun{
@@ -511,8 +517,8 @@ get_usage_shiny <- function(src, content_guid = NULL,
 #'     values.
 #'
 #' @details
-#' Please see https://docs.posit.co/connect/api/#getContentVisits for more
-#' information.
+#' Please see https://docs.posit.co/connect/api/#get-/v1/instrumentation/content/visits
+#' for more information.
 #'
 #' @examples
 #' \dontrun{
@@ -580,7 +586,7 @@ get_usage_static <- function(src, content_guid = NULL,
 #'   * `event_description`: Description of action
 #'
 #' @details
-#' Please see https://docs.posit.co/connect/api/#getAuditLogs for more
+#' Please see https://docs.posit.co/connect/api/#get-/v1/audit_logs for more
 #' information.
 #'
 #' @examples
@@ -613,7 +619,7 @@ get_audit_logs <- function(src, limit = 500, previous = NULL,
 
 #' Get Real-Time Process Data
 #'
-#' \lifecycle{experimental}
+#' `r lifecycle::badge('experimental')`
 #' This returns real-time process data from the Posit Connect API. It requires
 #' administrator privileges to use. NOTE that this only returns data for the
 #' server that responds to the request (i.e. in a Highly Available cluster)
@@ -669,7 +675,7 @@ get_procs <- function(src) {
 #' client <- connect()
 #'
 #' #* @get /do
-#' function(req){
+#' function(req) {
 #'   user_session_token <- req$HTTP_POSIT_CONNECT_USER_SESSION_TOKEN
 #'   credentials <- get_oauth_credentials(client, user_session_token)
 #'
@@ -686,7 +692,7 @@ get_procs <- function(src) {
 #' for more information.
 #'
 #' @export
-get_oauth_credentials = function(connect, user_session_token) {
+get_oauth_credentials <- function(connect, user_session_token) {
   validate_R6_class(connect, "Connect")
   url <- v1_url("oauth", "integrations", "credentials")
   body <- c(
@@ -701,4 +707,60 @@ get_oauth_credentials = function(connect, user_session_token) {
     encode = "form",
     body = body
   )
+}
+
+#' Get available runtimes on server
+#'
+#' Get a table showing available versions of R, Python, Quarto, and Tensorflow
+#' on the Connect server.
+#'
+#' @param client A `Connect` object.
+#' @param runtimes Optional. A character vector of runtimes to include. Must be
+#' some combination of `"r"`, `"python"`, `"quarto"`, and `"tensorflow"`. Quarto
+#' is only supported on Connect >= 2021.08.0, and Tensorflow is only supported
+#' on Connect >= 2024.03.0.
+
+#' @return A tibble with columns for `runtime`, `version`, and `cluster_name`
+#' and `image_name`. Cluster name and image name are only meaningful on Connect
+#' instances running off-host execution.
+#'
+#' @examples
+#' \dontrun{
+#' library(connectapi)
+#' client <- connect()
+#' get_runtimes(client, runtimes = c("r", "python", "tensorflow"))
+#' }
+#'
+#' @export
+get_runtimes <- function(client, runtimes = NULL) {
+  validate_R6_class(client, "Connect")
+
+  # Construct valid runtimes for the Connect version.
+  supported <- c(
+    "r",
+    "python",
+    if (compare_connect_version(client$version, "2021.08.0") >= 0) {
+      "quarto"
+    },
+    if (compare_connect_version(client$version, "2024.05.0") >= 0) {
+      "tensorflow"
+    }
+  )
+  if (is.null(runtimes)) {
+    runtimes <- supported
+  } else {
+    if (any(!runtimes %in% supported)) {
+      stop(glue::glue(
+        "`runtimes` must be one of ",
+        "{paste(paste0('\"', supported, '\"'), collapse = ', ')}; ",
+        "received: {paste(paste0('\"', runtimes, '\"'), collapse = ', ')}."
+      ))
+    }
+  }
+
+  purrr::map_dfr(runtimes, function(runtime) {
+    res <- client$GET(paste0("v1/server_settings/", runtime))
+    res_df <- purrr::map_dfr(res$installations, ~tibble::as_tibble(.))
+    tibble::add_column(res_df, runtime = runtime, .before = 1)
+  })
 }

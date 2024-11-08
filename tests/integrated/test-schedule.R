@@ -56,17 +56,42 @@ test_that("set_schedule_remove is idempotent", {
 
 test_that("schedule helpers work", {
   scoped_experimental_silence()
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_minute(get_variant_schedule(d_var_sch))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_hour(get_variant_schedule(d_var_sch))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_day(get_variant_schedule(d_var_sch))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_weekday(get_variant_schedule(d_var_sch))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_week(get_variant_schedule(d_var_sch))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_dayofweek(get_variant_schedule(d_var_sch), c(0, 1, 6))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_semimonth(get_variant_schedule(d_var_sch))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_semimonth(get_variant_schedule(d_var_sch), FALSE)), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_dayofmonth(get_variant_schedule(d_var_sch))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_dayweekofmonth(get_variant_schedule(d_var_sch))), "Variant"))
-  expect_true(validate_R6_class(set_schedule_remove(set_schedule_year(get_variant_schedule(d_var_sch))), "Variant"))
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_minute(get_variant_schedule(d_var_sch))), "Variant")
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_hour(get_variant_schedule(d_var_sch))), "Variant")
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_day(get_variant_schedule(d_var_sch))), "Variant")
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_weekday(get_variant_schedule(d_var_sch))), "Variant")
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_week(get_variant_schedule(d_var_sch))), "Variant")
+  )
+  expect_true(
+    validate_R6_class(
+      set_schedule_remove(set_schedule_dayofweek(get_variant_schedule(d_var_sch), c(0, 1, 6))),
+      "Variant"
+    )
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_semimonth(get_variant_schedule(d_var_sch))), "Variant")
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_semimonth(get_variant_schedule(d_var_sch), FALSE)), "Variant")
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_dayofmonth(get_variant_schedule(d_var_sch))), "Variant")
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_dayweekofmonth(get_variant_schedule(d_var_sch))), "Variant")
+  )
+  expect_true(
+    validate_R6_class(set_schedule_remove(set_schedule_year(get_variant_schedule(d_var_sch))), "Variant")
+  )
 })
 
 test_that("schedule display works", {
@@ -76,29 +101,14 @@ test_that("schedule display works", {
   tzs <- get_timezones(test_conn_1)
 
   set_schedule_remove(d_var_sch)
-  tmp <- set_schedule_day(get_variant_schedule(d_var_sch), start_time = as.POSIXct("2022-01-01 00:00:00"), n = 2, timezone = tzs$`Universal (+00:00)`)
+  tmp <- set_schedule_day(
+    get_variant_schedule(d_var_sch),
+    start_time = as.POSIXct("2022-01-01 00:00:00"),
+    n = 2,
+    timezone = tzs$`Universal (+00:00)`
+  )
   expect_snapshot_output(schedule_describe(tmp))
 })
-
-# test_that("timezones helper works", {
-#   tzs <- get_timezones(test_conn_1)
-#   expect_snapshot(tzs)
-# })
-
-# test_that("schedule timezone works", {
-#   scoped_experimental_silence()
-#
-#   tzs <- get_timezones(test_conn_1)
-#   set_schedule_remove(d_var_sch)
-#
-#   tmp <- set_schedule_minute(d_var_sch, n = 15, timezone = tzs$`America/New_York (-04:00)`)
-#   expect_equal(tmp$schedule_data$timezone, tzs$`America/New_York (-04:00)`)
-#
-#   tmp2 <- set_schedule_minute(d_var_sch, n = 10, timezone = tzs$`Universal (+00:00)`)
-#   expect_equal(tmp$schedule_data$timezone, tzs$`Universal (+00:00)`)
-#
-#   set_schedule_remove(d_var_sch)
-# })
 
 test_that("get_schedules works", {
   scoped_experimental_silence()

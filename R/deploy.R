@@ -21,7 +21,10 @@ Bundle <- R6::R6Class(
       self$path <- path
       self$size <- fs::file_size(path = path)
       if (fs::file_exists(path) && self$size > fs::as_fs_bytes(max_bundle_size)) {
-        warning(glue::glue("Bundle size is greater than {max_bundle_size}. Please ensure your bundle is not including too much."))
+        warning(glue::glue(
+          "Bundle size is greater than {max_bundle_size}. ",
+          "Please ensure your bundle is not including too much."
+        ))
       }
     },
 
@@ -302,7 +305,12 @@ bundle_path <- function(path) {
 #'
 #' @family deployment functions
 #' @export
-download_bundle <- function(content, filename = fs::file_temp(pattern = "bundle", ext = ".tar.gz"), bundle_id = NULL, overwrite = FALSE) {
+download_bundle <- function(
+  content,
+  filename = fs::file_temp(pattern = "bundle", ext = ".tar.gz"),
+  bundle_id = NULL,
+  overwrite = FALSE
+) {
   validate_R6_class(content, "Content")
 
   from_content <- content$get_content_remote()
@@ -345,7 +353,8 @@ download_bundle <- function(content, filename = fs::file_temp(pattern = "bundle"
 #' @param title optional The title to be used for the content on the server
 #' @param guid optional The GUID if the content already exists on the server
 #' @param ... Additional arguments passed along to the content creation
-#' @param .pre_deploy An expression to execute before deploying the new bundle. The variables `content` and `bundle_id` are supplied
+#' @param .pre_deploy An expression to execute before deploying the new bundle.
+#'   The variables `content` and `bundle_id` are supplied
 #' @param content A Content object
 #'
 #' @return Task A task object
@@ -382,7 +391,10 @@ deploy <- function(connect, bundle, name = create_random_name(), title = name, g
   new_bundle_id <- con$content_upload(bundle_path = bundle$path, guid = content$guid)[["id"]]
 
   pre_deploy_expr <- rlang::enexpr(.pre_deploy)
-  rlang::eval_bare(pre_deploy_expr, env = rlang::env(content = content_item(con, content$guid), bundle_id = new_bundle_id))
+  rlang::eval_bare(
+    pre_deploy_expr,
+    env = rlang::env(content = content_item(con, content$guid), bundle_id = new_bundle_id)
+  )
 
   message("Deploying bundle")
   # deploy
@@ -398,172 +410,6 @@ deploy_current <- function(content) {
   res <- content$deploy()
   return(ContentTask$new(connect = content$get_connect(), content = content, task = res))
 }
-
-
-#' Get the Content Image
-#'
-#' \lifecycle{experimental}
-#' `get_image` saves the content image to the given path (default: temp file).
-#' `delete_image` removes the image (optionally saving to the given path)
-#' `has_image` returns whether the content has an image
-#'
-#' @param content A content object
-#' @param path optional. The path to the image on disk
-#'
-#' @rdname get_image
-#' @family content functions
-#' @export
-get_image <- function(content, path = NULL) {
-  warn_experimental("get_image")
-  validate_R6_class(content, "Content")
-  guid <- content$get_content()$guid
-
-  con <- content$get_connect()
-
-  res <- con$GET(
-    unversioned_url("applications", guid, "image"),
-    parser = NULL
-  )
-
-  if (httr::status_code(res) == 204) {
-    return(NA)
-  }
-
-  # guess file extension
-  if (is.null(path)) {
-    ct <- httr::headers(res)$`content-type`
-    if (grepl("^image/", ct)) {
-      # just strip off 'image/'
-      ext <- substr(ct, 7, nchar(ct))
-      path <- fs::file_temp(pattern = "content_image_", ext = ext)
-    } else {
-      # try png
-      warning(glue::glue("Could not infer file extension from content type: {ct}. Using '.png'"))
-      path <- fs::file_temp(pattern = "content_image_", ext = ".png")
-    }
-  }
-
-  writeBin(httr::content(res, as = "raw"), path)
-
-  return(fs::as_fs_path(path))
-}
-
-#' @rdname get_image
-#' @export
-delete_image <- function(content, path = NULL) {
-  warn_experimental("delete_image")
-  validate_R6_class(content, "Content")
-  guid <- content$get_content()$guid
-
-  con <- content$get_connect()
-
-  if (!is.null(path)) {
-    scoped_experimental_silence()
-    get_image(content, path)
-  }
-
-  res <- con$DELETE(unversioned_url("applications", guid, "image"))
-
-  return(content)
-}
-
-#' @rdname get_image
-#' @export
-has_image <- function(content) {
-  warn_experimental("has_image")
-  validate_R6_class(content, "Content")
-  guid <- content$get_content()$guid
-
-  con <- content$get_connect()
-
-  res <- con$GET(unversioned_url("applications", guid, "image"), parser = NULL)
-
-  httr::status_code(res) != 204
-}
-
-#' Set the Content Image
-#'
-#' \lifecycle{experimental}
-#'
-#' Set the Content Image using a variety of methods.
-#'
-#' NOTE: `set_image_webshot()` requires [webshot2::webshot()], but currently
-#' skips and warns for any content that requires authentication until the
-#' `webshot2` package supports authentication.
-#'
-#' @param content A content object
-#' @param path The path to an image on disk
-#' @param url The url for an image
-#' @param ... Additional arguments passed on to [webshot2::webshot()]
-#'
-#' @rdname set_image
-#' @family content functions
-#' @export
-set_image_path <- function(content, path) {
-  warn_experimental("set_image_path")
-  validate_R6_class(content, "Content")
-  guid <- content$get_content()$guid
-
-  con <- content$get_connect()
-
-  res <- con$POST(
-    path = unversioned_url("applications", guid, "image"),
-    body = httr::upload_file(path)
-  )
-
-  # return the input (in case it inherits more than just Content)
-  content
-}
-
-#' @rdname set_image
-#' @export
-set_image_url <- function(content, url) {
-  warn_experimental("set_image_url")
-  validate_R6_class(content, "Content")
-  parsed_url <- httr::parse_url(url)
-  imgfile <- fs::file_temp(pattern = "image", ext = fs::path_ext(parsed_url[["path"]]))
-  httr::GET(url, httr::write_disk(imgfile))
-
-  set_image_path(content = content, path = imgfile)
-}
-
-#' @rdname set_image
-#' @export
-set_image_webshot <- function(content, ...) {
-  warn_experimental("set_image_webshot")
-  validate_R6_class(content, "Content")
-  imgfile <- fs::file_temp(pattern = "webshot", ext = ".png")
-
-  rlang::check_installed("webshot2", "to take screenshots of applications")
-  content_details <- content$get_content_remote()
-
-  # check if it is possible to take the webshot
-  if (content_details$access_type != "all") {
-    warning(glue::glue(
-      "WARNING: unable to take webshot for content ",
-      "'{content_details$guid}' because authentication is not possible yet. ",
-      "Set access_type='all' to proceed."
-    ))
-    return(content)
-  }
-
-  # default args
-  args <- rlang::list2(...)
-
-  if (!"cliprect" %in% names(args)) {
-    args["cliprect"] <- "viewport"
-  }
-
-
-  rlang::inject(webshot2::webshot(
-    url = content_details$content_url,
-    file = imgfile,
-    !!!args
-  ))
-
-  set_image_path(content = content, path = imgfile)
-}
-
 
 #' Set the Vanity URL
 #'
@@ -588,7 +434,7 @@ set_image_webshot <- function(content, ...) {
 set_vanity_url <- function(content, url, force = FALSE) {
   validate_R6_class(content, "Content")
   con <- content$get_connect()
-  error_if_less_than(con, "1.8.6")
+  error_if_less_than(con$version, "1.8.6")
   guid <- content$get_content()$guid
 
   scoped_experimental_silence()
@@ -615,7 +461,7 @@ set_vanity_url <- function(content, url, force = FALSE) {
 #' @export
 delete_vanity_url <- function(content) {
   con <- content$get_connect()
-  error_if_less_than(con, "1.8.6")
+  error_if_less_than(con$version, "1.8.6")
   guid <- content$get_content()$guid
 
   con$DELETE(v1_url("content", guid, "vanity"))
@@ -636,7 +482,7 @@ delete_vanity_url <- function(content) {
 get_vanity_url <- function(content) {
   validate_R6_class(content, "Content")
   con <- content$get_connect()
-  error_if_less_than(con, "1.8.6")
+  error_if_less_than(con$version, "1.8.6")
   guid <- content$get_content()$guid
 
   van <- tryCatch(
