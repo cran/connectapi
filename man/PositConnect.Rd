@@ -114,6 +114,7 @@ Other R6 classes:
 \item \href{#method-Connect-groups_create}{\code{Connect$groups_create()}}
 \item \href{#method-Connect-groups_create_remote}{\code{Connect$groups_create_remote()}}
 \item \href{#method-Connect-groups_remote}{\code{Connect$groups_remote()}}
+\item \href{#method-Connect-group_content}{\code{Connect$group_content()}}
 \item \href{#method-Connect-inst_content_visits}{\code{Connect$inst_content_visits()}}
 \item \href{#method-Connect-inst_shiny_usage}{\code{Connect$inst_shiny_usage()}}
 \item \href{#method-Connect-procs}{\code{Connect$procs()}}
@@ -123,6 +124,7 @@ Other R6 classes:
 \item \href{#method-Connect-schedules}{\code{Connect$schedules()}}
 \item \href{#method-Connect-docs}{\code{Connect$docs()}}
 \item \href{#method-Connect-audit_logs}{\code{Connect$audit_logs()}}
+\item \href{#method-Connect-vanities}{\code{Connect$vanities()}}
 \item \href{#method-Connect-server_settings_r}{\code{Connect$server_settings_r()}}
 \item \href{#method-Connect-server_settings}{\code{Connect$server_settings()}}
 \item \href{#method-Connect-clone}{\code{Connect$clone()}}
@@ -808,7 +810,13 @@ Get user details.
 \subsection{Method \code{users()}}{
 Get users.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Connect$users(page_number = 1, prefix = NULL, page_size = 500)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Connect$users(
+  page_number = 1,
+  prefix = NULL,
+  page_size = 500,
+  user_role = NULL,
+  account_status = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -819,6 +827,10 @@ Get users.
 \item{\code{prefix}}{The search term.}
 
 \item{\code{page_size}}{The page size.}
+
+\item{\code{user_role}}{Filter by user role.}
+
+\item{\code{account_status}}{Filter by account status.}
 }
 \if{html}{\out{</div>}}
 }
@@ -1080,6 +1092,23 @@ Get remote groups.
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Connect-group_content"></a>}}
+\if{latex}{\out{\hypertarget{method-Connect-group_content}{}}}
+\subsection{Method \code{group_content()}}{
+Get content to which a group has access
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Connect$group_content(guid)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{guid}}{The group GUID.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Connect-inst_content_visits"></a>}}
 \if{latex}{\out{\hypertarget{method-Connect-inst_content_visits}{}}}
 \subsection{Method \code{inst_content_visits()}}{
@@ -1291,6 +1320,16 @@ Get auditing.
 }
 \if{html}{\out{</div>}}
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Connect-vanities"></a>}}
+\if{latex}{\out{\hypertarget{method-Connect-vanities}{}}}
+\subsection{Method \code{vanities()}}{
+Get all vanity URLs
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Connect$vanities()}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Connect-server_settings_r"></a>}}

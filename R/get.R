@@ -5,6 +5,13 @@
 #' @param prefix Filters users by prefix (username, first name, or last name).
 #' The filter is case insensitive.
 #' @param limit The max number of records to return
+#' @param user_role Optionally filter by user role ("administrator",
+#' "publisher", "viewer"). Pass in a vector of multiple roles to match any value
+#' (boolean OR). When `NULL` (the default), results are not filtered.
+#' @param account_status Optionally filter by account status ("locked",
+#' "licensed", "inactive"). Pass a vector of multiple statuses to match any
+#' value (boolean OR). When `NULL` (the default), results are not filtered.
+
 #'
 #' @return
 #' A tibble with the following columns:
@@ -34,126 +41,39 @@
 #' library(connectapi)
 #' client <- connect()
 #'
-#' # get all users
-#' get_users(client, limit = Inf)
+#' # Get all users
+#' get_users(client)
+#'
+#' # Get all licensed users
+#' get_users(client, account_status = "licensed")
+#'
+#' # Get all users who are administrators or publishers
+#' get_users(client, user_role = c("administrator", "publisher"))
 #' }
 #'
 #' @export
-get_users <- function(src, page_size = 500, prefix = NULL, limit = Inf) {
+get_users <- function(
+  src,
+  page_size = 500,
+  prefix = NULL,
+  limit = Inf,
+  user_role = NULL,
+  account_status = NULL
+) {
   validate_R6_class(src, "Connect")
 
   res <- page_offset(
     src,
-    src$users(page_size = page_size, prefix = prefix),
+    src$users(
+      page_size = page_size,
+      prefix = prefix,
+      user_role = user_role,
+      account_status = account_status
+    ),
     limit = limit
   )
 
   out <- parse_connectapi_typed(res, connectapi_ptypes$users)
-
-  return(out)
-}
-
-#' Get group information from the Posit Connect server
-#'
-#' @param src The source object.
-#' @param page_size The number of records to return per page (max 500).
-#' @param prefix Filters groups by prefix (group name).
-#' The filter is case insensitive.
-#' @param limit The number of groups to retrieve before paging stops.
-#'
-#' `limit` will be ignored is `prefix` is not `NULL`.
-#' To limit results when `prefix` is not `NULL`, change `page_size`.
-#'
-#' @return
-#' A tibble with the following columns:
-#'
-#'   * `guid`: The unique identifier of the group
-#'   * `name`: The group name
-#'   * `owner_guid`: The group owner's unique identifier. When using LDAP or
-#'     Proxied authentication with group provisioning enabled this property
-#'     will always be null.
-#'
-#' @details
-#' Please see https://docs.posit.co/connect/api/#get-/v1/groups for more information.
-#'
-#' @examples
-#' \dontrun{
-#' library(connectapi)
-#' client <- connect()
-#'
-#' # get all groups
-#' get_groups(client, limit = Inf)
-#' }
-#'
-#' @export
-get_groups <- function(src, page_size = 500, prefix = NULL, limit = Inf) {
-  validate_R6_class(src, "Connect")
-
-  # The `v1/groups` endpoint always returns the first page when `prefix` is
-  # specified, so the page_offset function, which increments until it hits an
-  # empty page, fails.
-  if (!is.null(prefix)) {
-    response <- src$groups(page_size = page_size, prefix = prefix)
-    res <- response$results
-  } else {
-    res <- page_offset(src, src$groups(page_size = page_size, prefix = NULL), limit = limit)
-  }
-
-  out <- parse_connectapi_typed(res, connectapi_ptypes$groups)
-
-  return(out)
-}
-
-#' Get users within a specific group
-#'
-#' @param src The source object
-#' @param guid A group GUID identifier
-#'
-#' @return
-#' A tibble with the following columns:
-#'
-#'   * `email`: The user's email
-#'   * `username`: The user's username
-#'   * `first_name`: The user's first name
-#'   * `last_name`: The user's last name
-#'   * `user_role`: The user's role. It may have a value of administrator,
-#'     publisher or viewer.
-#'   * `created_time`: The timestamp (in RFC3339 format) when the user
-#'     was created in the Posit Connect server
-#'   * `updated_time`: The timestamp (in RFC3339 format) when the user
-#'     was last updated in the Posit Connect server
-#'   * `active_time`: The timestamp (in RFC3339 format) when the user
-#'     was last active on the Posit Connect server
-#'   * `confirmed`: When false, the created user must confirm their
-#'     account through an email. This feature is unique to password
-#'     authentication.
-#'   * `locked`: Whether or not the user is locked
-#'   * `guid`: The user's GUID, or unique identifier, in UUID RFC4122 format
-#'
-#' @details
-#' Please see https://docs.posit.co/connect/api/#get-/v1/groups/-group_guid-/members
-#' for more information.
-#'
-#' @examples
-#' \dontrun{
-#' library(connectapi)
-#' client <- connect()
-#'
-#' # get the first 20 groups
-#' groups <- get_groups(client)
-#'
-#' group_guid <- groups$guid[1]
-#'
-#' get_group_members(client, guid = group_guid)
-#' }
-#'
-#' @export
-get_group_members <- function(src, guid) {
-  validate_R6_class(src, "Connect")
-
-  res <- src$group_members(guid)
-
-  out <- parse_connectapi(res$results)
 
   return(out)
 }
@@ -695,12 +615,65 @@ get_procs <- function(src) {
 get_oauth_credentials <- function(connect, user_session_token) {
   validate_R6_class(connect, "Connect")
   url <- v1_url("oauth", "integrations", "credentials")
-  body <- c(
-    list(
-      grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
-      subject_token_type = "urn:posit:connect:user-session-token",
-      subject_token = user_session_token
-    )
+  body <- list(
+    grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
+    subject_token_type = "urn:posit:connect:user-session-token",
+    subject_token = user_session_token
+  )
+  connect$POST(
+    url,
+    encode = "form",
+    body = body
+  )
+}
+
+#' Perform an OAuth credential exchange to obtain a content-specific OAuth
+#' access token.
+#'
+#' @param connect A Connect R6 object.
+#' @param content_session_token Optional. The content session token. This token
+#' can only be obtained when the content is running on a Connect server. The
+#' token identifies the service account integration previously configured by
+#' the publisher on the Connect server. Defaults to the value from the
+#' environment variable: `CONNECT_CONTENT_SESSION_TOKEN`
+#'
+#' @examples
+#' \dontrun{
+#' library(connectapi)
+#' library(plumber)
+#' client <- connect()
+#'
+#' #* @get /do
+#' function(req) {
+#'   credentials <- get_oauth_content_credentials(client)
+#'
+#'   # ... do something with `credentials$access_token` ...
+#'
+#'   "done"
+#' }
+#' }
+#'
+#' @return The OAuth credential exchange response.
+#'
+#' @details
+#' Please see https://docs.posit.co/connect/user/oauth-integrations/#obtaining-a-service-account-oauth-access-token
+#' for more information.
+#'
+#' @export
+get_oauth_content_credentials <- function(connect, content_session_token = NULL) {
+  validate_R6_class(connect, "Connect")
+  error_if_less_than(connect$version, "2024.12.0")
+  if (is.null(content_session_token)) {
+    content_session_token <- Sys.getenv("CONNECT_CONTENT_SESSION_TOKEN")
+    if (nchar(content_session_token) == 0) {
+      stop("Could not find the CONNECT_CONTENT_SESSION_TOKEN environment variable.")
+    }
+  }
+  url <- v1_url("oauth", "integrations", "credentials")
+  body <- list(
+    grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
+    subject_token_type = "urn:posit:connect:content-session-token",
+    subject_token = content_session_token
   )
   connect$POST(
     url,
@@ -763,4 +736,27 @@ get_runtimes <- function(client, runtimes = NULL) {
     res_df <- purrr::map_dfr(res$installations, ~tibble::as_tibble(.))
     tibble::add_column(res_df, runtime = runtime, .before = 1)
   })
+}
+
+#' Get all vanity URLs
+#'
+#' Get a table of all vanity URLs on the server. Requires administrator
+#' privileges.
+#'
+#' @param client A `Connect` object.
+#'
+#' @return A tibble with columns for `content_guid`, `path`, and
+#' `created_time`.
+#'
+#' @examples
+#' \dontrun{
+#' library(connectapi)
+#' client <- connect()
+#' get_vanity_urls(client)
+#' }
+#'
+#' @export
+get_vanity_urls <- function(client) {
+  res <- client$vanities()
+  parse_connectapi_typed(res, connectapi_ptypes$vanities)
 }

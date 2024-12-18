@@ -27,14 +27,20 @@ make_timestamp <- function(input) {
   safe_format(input, "%Y-%m-%dT%H:%M:%SZ", tz = "UTC", usetz = FALSE)
 }
 
-ensure_columns <- function(.data, ptype) {
+ensure_columns <- function(.data, ptype, strict = FALSE) {
   # Given a prototype, ensure that all columns are present and cast to the correct type.
   # If a column is missing in .data, it will be created with all missing values of the correct type.
   # If a column is present in both, it will be cast to the correct type.
   # If a column is present in .data but not in ptype, it will be left as is.
+  # If `strict == TRUE`, include only columns present in the ptype, in the order they occur.
   for (i in names(ptype)) {
     .data <- ensure_column(.data, ptype[[i]], i)
   }
+
+  if (strict) {
+    .data <- .data[, names(ptype), drop = FALSE]
+  }
+
   .data
 }
 
@@ -59,14 +65,14 @@ ensure_column <- function(data, default, name) {
     if (inherits(default, "list") && !inherits(col, "list")) {
       col <- list(col)
     }
-    col <- vctrs::vec_cast(col, default)
+    col <- vctrs::vec_cast(col, default, x_arg = name)
   }
   data[[name]] <- col
   data
 }
 
-parse_connectapi_typed <- function(data, ptype) {
-  ensure_columns(parse_connectapi(data), ptype)
+parse_connectapi_typed <- function(data, ptype, strict = FALSE) {
+  ensure_columns(parse_connectapi(data), ptype, strict)
 }
 
 parse_connectapi <- function(data) {
@@ -185,6 +191,9 @@ tzone <- function(x) {
   attr(x, "tzone")[[1]] %||% ""
 }
 
+vec_cast.character.integer <- function(x, to, ...) { # nolint: object_name_linter
+  as.character(x)
+}
 
 new_datetime <- function(x = double(), tzone = "") {
   tzone <- tzone %||% ""

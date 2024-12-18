@@ -506,12 +506,28 @@ Connect <- R6::R6Class(
     #' @param page_number The page number.
     #' @param prefix The search term.
     #' @param page_size The page size.
-    users = function(page_number = 1, prefix = NULL, page_size = 500) {
+    #' @param user_role Filter by user role.
+    #' @param account_status Filter by account status.
+    users = function(
+      page_number = 1,
+      prefix = NULL,
+      page_size = 500,
+      user_role = NULL,
+      account_status = NULL
+    ) {
       path <- v1_url("users")
+      if (!is.null(user_role)) {
+        user_role <- paste(user_role, collapse = "|")
+      }
+      if (!is.null(account_status)) {
+        account_status <- paste(account_status, collapse = "|")
+      }
       query <- list(
         page_number = page_number,
         page_size = valid_page_size(page_size),
-        prefix = prefix
+        prefix = prefix,
+        user_role = user_role,
+        account_status = account_status
       )
       self$GET(path, query = query)
     },
@@ -671,6 +687,13 @@ Connect <- R6::R6Class(
       self$GET(path, query = query)
     },
 
+    #' @description Get content to which a group has access
+    #' @param guid The group GUID.
+    group_content = function(guid) {
+      path <- v1_url("experimental", "groups", guid, "content")
+      self$GET(path)
+    },
+
     # instrumentation --------------------------------------------
 
     #' @description Get (non-interactive) content visits.
@@ -828,6 +851,12 @@ Connect <- R6::R6Class(
       # This is funky because next is a reserved word in R
       query[["next"]] <- nxt
       self$GET(path = path, query = query)
+    },
+
+    #' @description Get all vanity URLs
+    vanities = function() {
+      path <- v1_url("vanities")
+      self$GET(path = path)
     },
 
     #' @description Get R installations.

@@ -161,20 +161,26 @@ connectapi_ptypes <- list(
     variant_key = NA_character_,
   ),
   jobs = tibble::tibble(
-    id = NA_integer_,
-    pid = NA_integer_,
+    id = NA_character_,
+    ppid = NA_character_,
+    pid = NA_character_,
     key = NA_character_,
-    app_id = NA_integer_,
-    app_guid = NA_character_,
-    variant_id = NA_integer_,
-    bundle_id = NA_integer_,
+    remote_id = NA_character_,
+    app_id = NA_character_,
+    variant_id = NA_character_,
+    bundle_id = NA_character_,
     start_time = NA_datetime_,
     end_time = NA_datetime_,
+    last_heartbeat_time = NA_datetime_,
+    queued_time = NA_datetime_,
+    queue_name = NA_character_,
     tag = NA_character_,
     exit_code = NA_integer_,
-    finalized = NA,
+    status = NA_integer_,
     hostname = NA_character_,
-    variant_key = NA_character_
+    cluster = NA_character_,
+    image = NA_character_,
+    run_as = NA_character_,
   ),
   job = tibble::tibble(
     pid = NA_integer_,
@@ -211,5 +217,26 @@ connectapi_ptypes <- list(
     principal_guid = NA_character_,
     principal_type = NA_character_,
     role = NA_character_
+  ),
+  group_content = tibble::tibble(
+    content_guid = NA_character_,
+    content_name = NA_character_,
+    content_title = NA_character_,
+    access_type = NA_character_,
+    permissions = NA_list_
+  ),
+  job_termination = tibble::tibble(
+    app_id = NA_integer_,
+    app_guid = NA_character_,
+    job_key = NA_character_,
+    job_id = NA_character_,
+    result = NA_character_,
+    code = NA_integer_,
+    error = NA_character_
+  ),
+  vanities = tibble::tibble(
+    content_guid = NA_character_,
+    path = NA_character_,
+    created_time = NA_datetime_
   )
 )

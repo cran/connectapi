@@ -1,3 +1,34 @@
+# connectapi 0.5.0
+
+## Breaking changes
+
+- `get_jobs()` now uses the public `v1` jobs endpoint when available, and as a
+  result, the data returned by this function has changed. In particular, the
+  `finalized` column is no longer present, replaced by `status`. `status == 0`
+  corresponds to `isFALSE(finalized)`. See `?get_jobs()` for more details about
+  the new return data format. (#340)
+
+## New features
+
+- `get_users()` has new parameters for filtering users by `account_status` and
+  `user_role`. This allows you to find, for example, all licensed users on a
+  Connect server. (#311)
+- The new `get_group_content()` function lets you view the content that groups
+  have permission to access. (#334)
+- The new `terminate_jobs()` function lets you terminate processes associated
+  with a content item. (#332)
+- The new `get_vanity_urls()` function lets you get all vanity URLs on a Connect
+  server (#333)
+- Added new `get_oauth_content_credentials()` function for interacting with
+  Connect's `/v1/oauth/integrations/credentials` endpoint. This endpoint allows
+  content running on Posit Connect to obtain an OAuth access token using the
+  client credentials flow. (#344).
+
+## Minor improvements and fixes
+
+- The task returned by `content_render()` now has the expected `task_id`
+  parameter and is able to be polled. (#338)
+
 # connectapi 0.4.0
 
 ## New features

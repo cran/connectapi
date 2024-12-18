@@ -140,3 +140,56 @@ with_mock_api({
     expect_identical(result$name, c("connect_dev", "cool_kids_of_the_dmv"))
   })
 })
+
+without_internet({
+  client <- Connect$new(server = "https://connect.example", api_key = "fake")
+  test_that("get_users() works with user_role and account_status", {
+    # No filter parameters specified
+    expect_GET(
+      get_users(client),
+      "https://connect.example/__api__/v1/users?page_number=1&page_size=500"
+    )
+
+    # Filter just on one parameter
+    expect_GET(
+      get_users(client, user_role = "administrator"),
+      "https://connect.example/__api__/v1/users?page_number=1&page_size=500&user_role=administrator"
+    )
+
+    # Filter on two parameters, one requiring concatenation
+    expect_GET(
+      get_users(
+        client,
+        user_role = c("administrator", "publisher"),
+        account_status = "licensed"
+      ),
+      paste0(
+        "https://connect.example/__api__/v1/users?page_number=1&page_size=500&",
+        "user_role=administrator%7Cpublisher&account_status=licensed"
+      )
+    )
+  })
+})
+
+test_that("get_vanity_urls() works", {
+  with_mock_api({
+    client <- Connect$new(server = "http://connect.example", api_key = "not-a-key")
+    expect_equal(
+      get_vanity_urls(client),
+      tibble::tibble(
+        content_guid = c(
+          "39c8d85a-37ae-4b8b-8655-30a06adff2f1",
+          "93a3cd6d-5a1b-236c-9808-6045f2a73fb5"
+        ),
+        path = c(
+          "/team-dashboard/",
+          "/streamlit/my-app/"
+        ),
+        created_time = structure(c(
+          1602623489,
+          1677679943
+        ), tzone = "UTC", class = c("POSIXct", "POSIXt"))
+      )
+    )
+  })
+})

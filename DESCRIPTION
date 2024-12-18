@@ -1,7 +1,7 @@
 Type: Package
 Package: connectapi
 Title: Utilities for Interacting with the 'Posit Connect' Server API
-Version: 0.4.0
+Version: 0.5.0
 Authors@R: c(
     person(given = "Toph",
            family = "Allen",
@@ -38,7 +38,7 @@ Language: en-US
 RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-11-08 23:12:49 UTC; toph
+Packaged: 2024-12-18 22:21:42 UTC; toph
 Author: Toph Allen [aut, cre],
   Neal Richardson [aut],
   Sean Lopp [aut],
@@ -46,4 +46,4 @@ Author: Toph Allen [aut, cre],
   Posit, PBC [cph, fnd]
 Maintainer: Toph Allen <toph@posit.co>
 Repository: CRAN
-Date/Publication: 2024-11-08 23:30:03 UTC
+Date/Publication: 2024-12-18 22:40:06 UTC

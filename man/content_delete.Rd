@@ -32,6 +32,7 @@ Other content functions:
 \code{\link{get_bundles}()},
 \code{\link{get_environment}()},
 \code{\link{get_image}()},
+\code{\link{get_job}()},
 \code{\link{get_jobs}()},
 \code{\link{get_thumbnail}()},
 \code{\link{get_vanity_url}()},
@@ -43,6 +44,7 @@ Other content functions:
 \code{\link{set_thumbnail}()},
 \code{\link{set_vanity_url}()},
 \code{\link{swap_vanity_url}()},
+\code{\link{terminate_jobs}()},
 \code{\link{verify_content_name}()}
 }
 \concept{content functions}

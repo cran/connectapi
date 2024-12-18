@@ -146,17 +146,15 @@ error_if_less_than <- function(using_version, tested_version) {
   comp <- compare_connect_version(using_version, tested_version)
   if (is.na(comp)) {
     msg <- glue::glue(
-      "WARNING: This API requires Posit Connect version {tested_version} ",
+      "WARNING: This feature requires Posit Connect version {tested_version} ",
       "but the server version is not exposed by this Posit Connect instance. ",
-      "You may be experience errors when using this functionality."
+      "You may experience errors when using this functionality."
     )
     warn_once(msg)
   } else if (comp < 0) {
     msg <- glue::glue(
-      "ERROR: This API requires Posit Connect version {tested_version} ",
-      "but you are using {using_version}. Please use a previous version ",
-      "of the `connectapi` package, upgrade Posit Connect, or review the API ",
-      "documentation corresponding to your version."
+      "ERROR: This feature requires Posit Connect version {tested_version} ",
+      "but you are using {using_version}. Please upgrade Posit Connect."
     )
     stop(msg)
   }
@@ -185,4 +183,14 @@ warn_untested_connect <- function(using_version, minimum_tested_version = "1.8.8
 token_hex <- function(n) {
   raw <- as.raw(sample(0:255, n, replace = TRUE))
   paste(as.character(raw), collapse = "")
+}
+
+# Checks to see if an http status contains a 404 error, and that that 404
+# response does not contain an error code indicating that an endpoint was called
+# but encountered a 404 for some other reason.
+endpoint_does_not_exist <- function(res) {
+  return(
+    httr::status_code(res) == "404" &&
+      !("code" %in% names(httr::content(res, as = "parsed")))
+  )
 }
