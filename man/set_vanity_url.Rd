@@ -17,7 +17,7 @@ set_vanity_url(content, url, force = FALSE)
 An updated Content object
 }
 \description{
-Sets the Vanity URL for a piece of content.
+Set the vanity URL for a piece of content.
 }
 \examples{
 \dontrun{
@@ -45,6 +45,7 @@ Other content functions:
 \code{\link{get_image}()},
 \code{\link{get_job}()},
 \code{\link{get_jobs}()},
+\code{\link{get_log}()},
 \code{\link{get_thumbnail}()},
 \code{\link{get_vanity_url}()},
 \code{\link{git}},
@@ -54,6 +55,7 @@ Other content functions:
 \code{\link{set_run_as}()},
 \code{\link{set_thumbnail}()},
 \code{\link{swap_vanity_url}()},
+\code{\link{swap_vanity_urls}()},
 \code{\link{terminate_jobs}()},
 \code{\link{verify_content_name}()}
 }

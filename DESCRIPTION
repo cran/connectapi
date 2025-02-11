@@ -1,7 +1,7 @@
 Type: Package
 Package: connectapi
 Title: Utilities for Interacting with the 'Posit Connect' Server API
-Version: 0.5.0
+Version: 0.6.0
 Authors@R: c(
     person(given = "Toph",
            family = "Allen",
@@ -24,9 +24,9 @@ Description: Provides a helpful 'R6' class and methods for interacting with
     and version, but the latest documentation is also hosted publicly at
     <https://docs.posit.co/connect/api/>.
 License: MIT + file LICENSE
-URL: https://pkgs.rstudio.com/connectapi/,
-        https://github.com/rstudio/connectapi
-BugReports: https://github.com/rstudio/connectapi/issues
+URL: https://posit-dev.github.io/connectapi/,
+        https://github.com/posit-dev/connectapi
+BugReports: https://github.com/posit-dev/connectapi/issues
 Imports: bit64, fs, glue, httr, mime, jsonlite, lifecycle, magrittr,
         purrr, R6, rlang (>= 0.4.2), tibble, uuid, vctrs (>= 0.3.0)
 Suggests: covr, dbplyr, dplyr, ggplot2, gridExtra, httptest, knitr,
@@ -38,7 +38,7 @@ Language: en-US
 RoxygenNote: 7.3.2
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2024-12-18 22:21:42 UTC; toph
+Packaged: 2025-02-11 20:36:40 UTC; toph
 Author: Toph Allen [aut, cre],
   Neal Richardson [aut],
   Sean Lopp [aut],
@@ -46,4 +46,4 @@ Author: Toph Allen [aut, cre],
   Posit, PBC [cph, fnd]
 Maintainer: Toph Allen <toph@posit.co>
 Repository: CRAN
-Date/Publication: 2024-12-18 22:40:06 UTC
+Date/Publication: 2025-02-11 20:50:02 UTC

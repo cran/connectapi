@@ -166,7 +166,10 @@ connectapi_ptypes <- list(
     pid = NA_character_,
     key = NA_character_,
     remote_id = NA_character_,
+    content_id = NA_character_,
+    content_guid = NA_character_,
     app_id = NA_character_,
+    app_guid = NA_character_,
     variant_id = NA_character_,
     bundle_id = NA_character_,
     start_time = NA_datetime_,
@@ -238,5 +241,10 @@ connectapi_ptypes <- list(
     content_guid = NA_character_,
     path = NA_character_,
     created_time = NA_datetime_
+  ),
+  job_log = tibble::tibble(
+    source = NA_character_,
+    timestamp = NA_datetime_,
+    data = NA_character_
   )
 )

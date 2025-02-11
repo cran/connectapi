@@ -13,7 +13,7 @@ get_vanity_url(content)
 A character string (or NULL if not defined)
 }
 \description{
-Gets the Vanity URL for a piece of content.
+Get the vanity URL for a piece of content.
 }
 \seealso{
 Other content functions: 
@@ -32,6 +32,7 @@ Other content functions:
 \code{\link{get_image}()},
 \code{\link{get_job}()},
 \code{\link{get_jobs}()},
+\code{\link{get_log}()},
 \code{\link{get_thumbnail}()},
 \code{\link{git}},
 \code{\link{has_thumbnail}()},
@@ -41,6 +42,7 @@ Other content functions:
 \code{\link{set_thumbnail}()},
 \code{\link{set_vanity_url}()},
 \code{\link{swap_vanity_url}()},
+\code{\link{swap_vanity_urls}()},
 \code{\link{terminate_jobs}()},
 \code{\link{verify_content_name}()}
 }

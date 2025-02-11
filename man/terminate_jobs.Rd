@@ -32,10 +32,19 @@ request returns an error.
 Register a job kill order for one or more jobs associated with a content
 item. Requires Connect 2022.10.0 or newer.
 }
+\examples{
+\dontrun{
+client <- connect()
+item <- content_item(client, "951bf3ad-82d0-4bca-bba8-9b27e35c49fa")
+result <- terminate_jobs(item)
+}
+
+}
 \seealso{
 Other job functions: 
 \code{\link{get_job}()},
-\code{\link{get_jobs}()}
+\code{\link{get_jobs}()},
+\code{\link{get_log}()}
 
 Other content functions: 
 \code{\link{content_delete}()},
@@ -53,6 +62,7 @@ Other content functions:
 \code{\link{get_image}()},
 \code{\link{get_job}()},
 \code{\link{get_jobs}()},
+\code{\link{get_log}()},
 \code{\link{get_thumbnail}()},
 \code{\link{get_vanity_url}()},
 \code{\link{git}},
@@ -63,6 +73,7 @@ Other content functions:
 \code{\link{set_thumbnail}()},
 \code{\link{set_vanity_url}()},
 \code{\link{swap_vanity_url}()},
+\code{\link{swap_vanity_urls}()},
 \code{\link{verify_content_name}()}
 }
 \concept{content functions}
