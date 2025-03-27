@@ -585,11 +585,11 @@ get_procs <- function(src) {
 #' @param user_session_token The content visitor's session token. This token
 #' can only be obtained when the content is running on a Connect server. The token
 #' identifies the user who is viewing the content interactively on the Connect server.
-#' @param requested_token_type Optional. You may pass `"urn:posit:connect:api-key"` to
-#' request an ephemeral Connect API key scoped to the content visitor's account.
-#'
-#'
 #' Read this value from the HTTP header: `Posit-Connect-User-Session-Token`
+#' @param requested_token_type Optional. The requested token type. If unset, will
+#' default to `urn:ietf:params:oauth:token-type:access_token`. Otherwise, this can
+#' be set to `urn:ietf:params:aws:token-type:credentials` for AWS integrations or
+#' `urn:posit:connect:api-key` for Connect API Key integrations.
 #'
 #' @examples
 #' \dontrun{
@@ -617,6 +617,9 @@ get_procs <- function(src) {
 #' @export
 get_oauth_credentials <- function(connect, user_session_token, requested_token_type = NULL) {
   validate_R6_class(connect, "Connect")
+  if (is.null(requested_token_type)) {
+    requested_token_type <- "urn:ietf:params:oauth:token-type:access_token"
+  }
   url <- v1_url("oauth", "integrations", "credentials")
   body <- list(
     grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
@@ -640,6 +643,10 @@ get_oauth_credentials <- function(connect, user_session_token, requested_token_t
 #' token identifies the service account integration previously configured by
 #' the publisher on the Connect server. Defaults to the value from the
 #' environment variable: `CONNECT_CONTENT_SESSION_TOKEN`
+#' @param requested_token_type Optional. The requested token type. If unset,
+#' will default to `urn:ietf:params:oauth:token-type:access_token`. Otherwise,
+#' this can be set to `urn:ietf:params:aws:token-type:credentials` for AWS
+#' integrations or `urn:posit:connect:api-key` for Connect API Key integrations.
 #'
 #' @examples
 #' \dontrun{
@@ -664,7 +671,11 @@ get_oauth_credentials <- function(connect, user_session_token, requested_token_t
 #' for more information.
 #'
 #' @export
-get_oauth_content_credentials <- function(connect, content_session_token = NULL) {
+get_oauth_content_credentials <- function(
+  connect,
+  content_session_token = NULL,
+  requested_token_type = NULL
+) {
   validate_R6_class(connect, "Connect")
   error_if_less_than(connect$version, "2024.12.0")
   if (is.null(content_session_token)) {
@@ -673,16 +684,159 @@ get_oauth_content_credentials <- function(connect, content_session_token = NULL)
       stop("Could not find the CONNECT_CONTENT_SESSION_TOKEN environment variable.")
     }
   }
+  if (is.null(requested_token_type)) {
+    requested_token_type <- "urn:ietf:params:oauth:token-type:access_token"
+  }
   url <- v1_url("oauth", "integrations", "credentials")
   body <- list(
     grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
     subject_token_type = "urn:posit:connect:content-session-token",
-    subject_token = content_session_token
+    subject_token = content_session_token,
+    requested_token_type = requested_token_type
   )
   connect$POST(
     url,
     encode = "form",
     body = body
+  )
+}
+
+#' Obtain a visitor's AWS credentials
+#'
+#' @param connect A Connect R6 object.
+#' @param user_session_token The content visitor's session token. This token
+#' can only be obtained when the content is running on a Connect server. The token
+#' identifies the user who is viewing the content interactively on the Connect server.
+#' Read this value from the HTTP header: `Posit-Connect-User-Session-Token`
+#'
+#' @return The AWS credentials as a list with fields named `access_key_id`,
+#' `secret_access_key`, `session_token`, and `expiration`.
+#'
+#' @details
+#' Please see https://docs.posit.co/connect/user/oauth-integrations/#obtaining-service-account-aws-credentials
+#' for more information. See the example below of using this function in a
+#' Plumber API with paws to access S3. Any library that allows you to pass
+#' AWS credentials will be able to utilize the credentials returned from
+#' this function call.
+#'
+#' @examples
+#' \dontrun{
+#' library(connectapi)
+#' library(plumber)
+#' library(paws)
+#' client <- connect()
+#'
+#' #* @get /do
+#' function(req) {
+#'   user_session_token <- req$HTTP_POSIT_CONNECT_USER_SESSION_TOKEN
+#'   aws_credentials <- get_aws_credentials(client, user_session_token)
+#'
+#'   # Create S3 client with AWS credentials from Connect
+#'   svc <- paws::s3(
+#'     credentials = list(
+#'       creds = list(
+#'         access_key_id = aws_credentials$access_key_id,
+#'         secret_access_key = aws_credentials$secret_access_key,
+#'         session_token = aws_credentials$session_token
+#'       )
+#'     )
+#'   )
+#'
+#'   # Get object from S3
+#'   obj <- svc$get_object(
+#'     Bucket = "my-bucket",
+#'     Key = "my-data.csv"
+#'   )
+#'
+#'   "done"
+#' }
+#' }
+#'
+#' @export
+get_aws_credentials <- function(connect, user_session_token) {
+  error_if_less_than(connect$version, "2025.03.0")
+  response <- get_oauth_credentials(
+    connect,
+    user_session_token,
+    requested_token_type = "urn:ietf:params:aws:token-type:credentials"
+  )
+
+  # Extract access token and decode it
+  access_token <- rawToChar(base64enc::base64decode(response$access_token))
+  credentials <- jsonlite::fromJSON(access_token)
+
+  list(
+    access_key_id = credentials$accessKeyId,
+    secret_access_key = credentials$secretAccessKey,
+    session_token = credentials$sessionToken,
+    expiration = credentials$expiration
+  )
+}
+
+#' Obtain AWS credentials for your content.
+#'
+#' @param connect A Connect R6 object.
+#' @param content_session_token Optional. The content session token. This token
+#' can only be obtained when the content is running on a Connect server. The
+#' token identifies the service account integration previously configured by
+#' the publisher on the Connect server. Defaults to the value from the
+#' environment variable: `CONNECT_CONTENT_SESSION_TOKEN`
+#'
+#' @return The AWS credentials as a list with fields named `access_key_id`,
+#' `secret_access_key`, `session_token`, and `expiration`.
+#'
+#' @details
+#' Please see https://docs.posit.co/connect/user/oauth-integrations/#obtaining-service-account-aws-credentials
+#' for more information. See the example below of using this function with
+#' `paws` to access S3. Any library that allows you to pass AWS credentials
+#' will be able to utilize the credentials returned from this function call.
+#'
+#' @examples
+#' \dontrun{
+#' library(connectapi)
+#' library(paws)
+#'
+#' client <- connect()
+#' # Pulls the content session token from the environment
+#' # when deployed into Connect.
+#' aws_credentials <- get_aws_content_credentials(client)
+#'
+#' # Create S3 client with AWS credentials from Connect
+#' svc <- paws::s3(
+#'   credentials = list(
+#'     creds = list(
+#'       access_key_id = aws_credentials$access_key_id,
+#'       secret_access_key = aws_credentials$secret_access_key,
+#'       session_token = aws_credentials$session_token
+#'     )
+#'   )
+#' )
+#'
+#' # Get object from S3
+#' obj <- svc$get_object(
+#'   Bucket = "my-bucket",
+#'   Key = "my-data.csv"
+#' )
+#' }
+#'
+#' @export
+get_aws_content_credentials <- function(connect, content_session_token = NULL) {
+  error_if_less_than(connect$version, "2025.03.0")
+  response <- get_oauth_content_credentials(
+    connect,
+    content_session_token,
+    requested_token_type = "urn:ietf:params:aws:token-type:credentials"
+  )
+
+  # Extract access token and decode it
+  access_token <- rawToChar(base64enc::base64decode(response$access_token))
+  credentials <- jsonlite::fromJSON(access_token)
+
+  list(
+    access_key_id = credentials$accessKeyId,
+    secret_access_key = credentials$secretAccessKey,
+    session_token = credentials$sessionToken,
+    expiration = credentials$expiration
   )
 }
 
@@ -740,6 +894,68 @@ get_runtimes <- function(client, runtimes = NULL) {
     res_df <- purrr::map_dfr(res$installations, ~tibble::as_tibble(.))
     tibble::add_column(res_df, runtime = runtime, .before = 1)
   })
+}
+
+#' All package dependencies on the server
+#'
+#' @description Get a data frame of package dependencies used by all content
+#' items on the server.
+#'
+#' @usage get_packages(src, name = NULL, page_size = 100000, limit = Inf)
+#'
+#' @param src A `Connect` client object.
+#' @param name Optional package name to filter by. Python package are normalized
+#' during matching; R package names must match exactly.
+#' @param page_size Optional. Integer specifying page size for API
+#' paging.
+#' @param limit Optional. Specify the maximum number of records after which
+#' to cease paging.
+#'
+#' @return A data frame with the following columns:
+#'
+#' - `language`: Language ecosystem the package belongs to (`r` or `python`)
+#' - `language_version`: Version of R or Python used by the content
+#' - `name`: Package name
+#' - `version`: Package version
+#' - `hash`: Package description hash for R packages
+#' - `bundle_id`: Identifier for the bundle that depends on this package
+#' - `content_id`: Numeric identifier for the content that depends on this
+#'   package
+#' - `content_guid`: The unique identifier of the content item that depends on
+#'   this package
+#'
+#' @examples
+#' \dontrun{
+#' client <- connect()
+#' packages <- get_packages(client)
+#' }
+#'
+#' @family packages functions
+#' @export
+get_packages <- function(src, name = NULL, page_size = 100000, limit = Inf) {
+  validate_R6_class(src, "Connect")
+  error_if_less_than(src$version, "2024.11.0")
+  res <- page_offset(
+    src,
+    src$packages(
+      name = name,
+      page_size = page_size
+    )
+  )
+  out <- parse_connectapi_typed(res, connectapi_ptypes$packages)
+
+  # Connect is standardizing on using `content_id` and `content_guid`.
+  # Handle that name change now in a forward-compatible way.
+  if ("app_id" %in% names(out)) {
+    out$content_id <- out$app_id
+    out$app_id <- NULL
+  }
+  if ("app_guid" %in% names(out)) {
+    out$content_guid <- out$app_guid
+    out$app_guid <- NULL
+  }
+
+  out
 }
 
 #' Get all vanity URLs
