@@ -35,8 +35,50 @@ test_that("version is validated", {
 
 test_that("Handling error responses", {
   con <- Connect$new(server = "https://connect.example", api_key = "fake")
-  resp <- fake_response("https://connect.example/__api__/", status_code = 400L)
-  expect_error(con$raise_error(resp), "Bad Request")
+  resp <- fake_response(
+    "https://connect.example/__api__/",
+    headers = list(`Content-Type` = "application/json; charset=utf-8"),
+    status_code = 400L,
+    content = list(code = 3, error = "Invalid GUID: abc", payload = NULL)
+  )
+  expect_error(
+    con$raise_error(resp),
+    "request failed with Client error: \\(400\\) Bad Request \\(code: 3, error: Invalid GUID: abc\\)"
+  )
+})
+
+test_that("Handling error responses without all expected fields", {
+  con <- Connect$new(server = "https://connect.example", api_key = "fake")
+  resp1 <- fake_response(
+    "https://connect.example/__api__/",
+    headers = list(`Content-Type` = "application/json; charset=utf-8"),
+    status_code = 400L,
+    content = list(code = 3L)
+  )
+  resp2 <- fake_response(
+    "https://connect.example/__api__/",
+    headers = list(`Content-Type` = "application/json; charset=utf-8"),
+    status_code = 400L,
+    content = list(error = "Invalid GUID: abc")
+  )
+  resp3 <- fake_response(
+    "https://connect.example/__api__/",
+    headers = list(`Content-Type` = "application/json; charset=utf-8"),
+    status_code = 400L,
+    content = NULL
+  )
+  expect_error(
+    con$raise_error(resp1),
+    "request failed with Client error: \\(400\\) Bad Request \\(code: 3\\)"
+  )
+  expect_error(
+    con$raise_error(resp2),
+    "request failed with Client error: \\(400\\) Bad Request \\(error: Invalid GUID: abc\\)"
+  )
+  expect_error(
+    con$raise_error(resp3),
+    "request failed with Client error: \\(400\\) Bad Request $"
+  )
 })
 
 test_that("Handling deprecation warnings", {
@@ -44,27 +86,38 @@ test_that("Handling deprecation warnings", {
   on.exit(rlang::reset_warning_verbosity("X-Deprecated-Endpoint"))
 
   # No warning here
-  resp <- fake_response("https://connect.example/__api__/", headers = list(
-    `Content-Type` = "application/json"
-  ))
-  expect_warning(check_debug(resp), NA)
-
-  # Yes warning here
-  resp <- fake_response("https://connect.example/__api__/", headers = list(
-    `X-Deprecated-Endpoint` = "/v1"
-  ))
-  expect_warning(
-    check_debug(resp),
-    paste(
-      "https://connect.example/__api__/ is deprecated and will be removed in a",
-      "future version of Connect. Please upgrade `connectapi` in order to use",
-      "the new APIs."
-    ),
-    class = "deprecatedWarning"
+  resp <- fake_response(
+    "https://connect.example/__api__/",
+    headers = list(
+      `Content-Type` = "application/json; charset=utf-8"
+    )
   )
-
-  # No warning if you do it again because we only warn the first time
   expect_warning(check_debug(resp), NA)
+
+  withr::with_options(
+    list(rlib_warning_verbosity = "default"), {
+
+      # Yes warning here
+      resp <- fake_response(
+        "https://connect.example/__api__/",
+        headers = list(
+          `X-Deprecated-Endpoint` = "/v1",
+          `Content-Type` = "application/json; charset=utf-8"
+        )
+      )
+      expect_warning(
+        check_debug(resp),
+        paste(
+          "https://connect.example/__api__/ is deprecated and will be removed in a",
+          "future version of Connect. Please upgrade `connectapi` in order to use",
+          "the new APIs."
+        ),
+        class = "deprecatedWarning"
+      )
+      # No warning if you do it again because we only warn the first time
+      expect_warning(check_debug(resp), NA)
+    }
+  )
 })
 
 with_mock_api({
@@ -72,12 +125,18 @@ with_mock_api({
     con <- Connect$new(server = "https://connect.example", api_key = "fake")
     # Inject into this function something other than utils::browseURL
     # so we can assert that it is being called without actually trying to open a browser
-    suppressMessages(trace("browse_url", where = connectapi::browse_solo, tracer = quote({
-      browseURL <- # nolint: object_name_linter
-        function(x) {
-          warning(paste("Opening", x))
-        }
-    }), at = 1, print = FALSE))
+    suppressMessages(trace(
+      "browse_url",
+      where = connectapi::browse_solo,
+      tracer = quote({
+        browseURL <- # nolint: object_name_linter
+          function(x) {
+            warning(paste("Opening", x))
+          }
+      }),
+      at = 1,
+      print = FALSE
+    ))
     expect_warning(
       browse_connect(con),
       "Opening https://connect.example"
@@ -101,10 +160,9 @@ with_mock_api({
     )
   })
 
-
   test_that("client$version is NA when server settings lacks version info", {
     con <- Connect$new(server = "https://connect.example", api_key = "fake")
-    expect_message(v <- con$version, "Version information is not exposed by this Posit Connect instance")
+    v <- con$version
     expect_true(is.na(v))
   })
 })
@@ -118,13 +176,39 @@ test_that("client$version is returns version when server settings exposes it", {
 
 test_that("Visitor client can successfully be created running on Connect", {
   with_mock_api({
+    withr::local_options(list(rlib_warning_verbosity = "verbose"))
     withr::local_envvar(
       CONNECT_SERVER = "https://connect.example",
       CONNECT_API_KEY = "fake",
       RSTUDIO_PRODUCT = "CONNECT"
     )
 
-    client <- connect(token = "my-token")
+    expect_warning(
+      client <- connect(token = "my-token"),
+      "This feature requires Posit Connect version"
+    )
+
+    expect_equal(
+      client$server,
+      "https://connect.example"
+    )
+    expect_equal(
+      client$api_key,
+      "visitor-api-key"
+    )
+  })
+})
+
+test_that("Visitor client can successfully be created running on Connect with audience", {
+  with_mock_dir("2025.07.0", {
+    withr::local_options(list(rlib_warning_verbosity = "verbose"))
+    withr::local_envvar(
+      CONNECT_SERVER = "https://connect.example",
+      CONNECT_API_KEY = "fake",
+      RSTUDIO_PRODUCT = "CONNECT"
+    )
+
+    client <- connect(token = "my-token", audience = "audience")
 
     expect_equal(
       client$server,
@@ -139,15 +223,19 @@ test_that("Visitor client can successfully be created running on Connect", {
 
 test_that("Visitor client uses fallback api key when running locally", {
   with_mock_api({
+    withr::local_options(list(rlib_warning_verbosity = "verbose"))
     withr::local_envvar(
       CONNECT_SERVER = "https://connect.example",
       CONNECT_API_KEY = "fake"
     )
 
     # With default fallback
-    expect_message(
-      client <- connect(token = NULL),
-      "Called with `token` but not running on Connect. Continuing with fallback API key."
+    expect_warning(
+      expect_message(
+        client <- connect(token = NULL),
+        "Called with `token` but not running on Connect. Continuing with fallback API key."
+      ),
+      "the server version is not exposed by this Posit Connect instance"
     )
 
     expect_equal(
@@ -160,9 +248,15 @@ test_that("Visitor client uses fallback api key when running locally", {
     )
 
     # With explicitly-defined fallback
-    expect_message(
-      client <- connect(token = NULL, token_local_testing_key = "fallback_fake"),
-      "Called with `token` but not running on Connect. Continuing with fallback API key."
+    expect_warning(
+      expect_message(
+        client <- connect(
+          token = NULL,
+          token_local_testing_key = "fallback_fake"
+        ),
+        "Called with `token` but not running on Connect. Continuing with fallback API key."
+      ),
+      "the server version is not exposed by this Posit Connect instance"
     )
 
     expect_equal(
@@ -194,10 +288,13 @@ test_that("Visitor client code path errs with older Connect version", {
 test_that("Scientific notation is not used for reasonable parameters", {
   with_mock_api({
     test_scipen <- 5
-    o <- options(scipen = test_scipen)
-    on.exit(options(o), add = TRUE)
+    withr::local_options(
+      rlib_warning_verbosity = "quiet",
+      scipen = test_scipen
+    )
 
     client <- Connect$new(server = "https://connect.example", api_key = "fake")
+
     expect_GET(
       get_packages(client, page_size = 999999999),
       "https://connect.example/__api__/v1/packages?page_number=1&page_size=999999999"

@@ -174,7 +174,7 @@ get_users <- function(
 #'     Applies only to executable content types - not static.
 #'   * `owner_guid`: The unique identifier for the owner
 #'   * `content_url`: The URL associated with this content. Computed
-#'     from the associated vanity URL or GUID for this content.
+#'     from the GUID for this content.
 #'   * `dashboard_url`: The URL within the Connect dashboard where
 #'     this content can be configured. Computed from the GUID for this content.
 #'   * `role`: The relationship of the accessing user to this
@@ -183,7 +183,24 @@ get_users <- function(
 #'     permitted to view the content. A none role is returned for
 #'     administrators who cannot view the content but are permitted to view
 #'     its configuration. Computed at the time of the request.
-#'   * `id`: The internal numeric identifier of this content item
+#'   * `vanity_url`: The vanity URL associated with this content item.
+#'   * `id`: The internal numeric identifier of this content item.
+#'   * `tags`: Tags associated with this content item. Each entry is a list
+#'     with the following fields:
+#'     * `id`: The identifier for the tag.
+#'     * `name`: The name of the tag.
+#'     * `parent_id`: The identifier for the parent tag. Null if the tag is a
+#'       top-level tag.
+#'     * `created_time`: The timestamp (RFC3339) indicating when the tag was
+#'       created.
+#'     * `updated_time`: The timestamp (RFC3339) indicating when the tag was
+#'       last updated.
+#'   * `owner`: Basic details about the owner of this content item. Each entry
+#'     is a list with the following fields:
+#'     * `guid`: The user's GUID, or unique identifier, in UUID RFC4122 format.
+#'     * `username`: The user's username.
+#'     * `first_name`: The user's first name.
+#'     * `last_name`: The user's last name.
 #'
 #' @details
 #' Please see https://docs.posit.co/connect/api/#get-/v1/content for more
@@ -198,10 +215,34 @@ get_users <- function(
 #' }
 #'
 #' @export
-get_content <- function(src, guid = NULL, owner_guid = NULL, name = NULL, ..., .p = NULL) {
+get_content <- function(
+  src,
+  guid = NULL,
+  owner_guid = NULL,
+  name = NULL,
+  ...,
+  .p = NULL
+) {
   validate_R6_class(src, "Connect")
 
-  res <- src$content(guid = guid, owner_guid = owner_guid, name = name)
+  # The capability to return vanity URLs `vanity_url` was added in Connect
+  # v2024.06.0.
+  if (compare_connect_version(src$version, "2024.06.0") < 0) {
+    include <- "tags,owner"
+    content_ptype <- connectapi_ptypes$content[,
+      names(connectapi_ptypes$content) != "vanity_url"
+    ]
+  } else {
+    include <- "tags,owner,vanity_url"
+    content_ptype <- connectapi_ptypes$content
+  }
+
+  res <- src$content(
+    guid = guid,
+    owner_guid = owner_guid,
+    name = name,
+    include = include
+  )
 
   if (!is.null(guid)) {
     # convert a single item to a list
@@ -212,7 +253,7 @@ get_content <- function(src, guid = NULL, owner_guid = NULL, name = NULL, ..., .
     res <- res %>% purrr::keep(.p = .p)
   }
 
-  out <- parse_connectapi_typed(res, connectapi_ptypes$content)
+  out <- parse_connectapi_typed(res, content_ptype)
 
   return(out)
 }
@@ -294,7 +335,8 @@ content_list_by_tag <- function(src, tag) {
 #' @export
 content_list_guid_has_access <- function(content_list, guid) {
   warn_experimental("content_list_filter_by_guid")
-  rows_keep <- content_list$access_type %in% c("all", "logged_in") |
+  rows_keep <- content_list$access_type %in%
+    c("all", "logged_in") |
     content_list$owner_guid == guid |
     purrr::map_lgl(content_list$permission, ~ guid %in% .x$principal_guid)
   content_list[rows_keep, ]
@@ -357,14 +399,17 @@ content_list_guid_has_access <- function(content_list, guid) {
 #' }
 #'
 #' @export
-get_usage_shiny <- function(src, content_guid = NULL,
-                            min_data_version = NULL,
-                            from = NULL,
-                            to = NULL,
-                            limit = 500,
-                            previous = NULL,
-                            nxt = NULL,
-                            asc_order = TRUE) {
+get_usage_shiny <- function(
+  src,
+  content_guid = NULL,
+  min_data_version = NULL,
+  from = NULL,
+  to = NULL,
+  limit = 500,
+  previous = NULL,
+  nxt = NULL,
+  asc_order = TRUE
+) {
   validate_R6_class(src, "Connect")
 
   res <- src$inst_shiny_usage(
@@ -450,14 +495,17 @@ get_usage_shiny <- function(src, content_guid = NULL,
 #' }
 #'
 #' @export
-get_usage_static <- function(src, content_guid = NULL,
-                             min_data_version = NULL,
-                             from = NULL,
-                             to = NULL,
-                             limit = 500,
-                             previous = NULL,
-                             nxt = NULL,
-                             asc_order = TRUE) {
+get_usage_static <- function(
+  src,
+  content_guid = NULL,
+  min_data_version = NULL,
+  from = NULL,
+  to = NULL,
+  limit = 500,
+  previous = NULL,
+  nxt = NULL,
+  asc_order = TRUE
+) {
   validate_R6_class(src, "Connect")
 
   res <- src$inst_content_visits(
@@ -478,6 +526,157 @@ get_usage_static <- function(src, content_guid = NULL,
   return(out)
 }
 
+#' Get usage information for deployed content
+#'
+#' @description
+#' Retrieve content hits for all available content on the server. Available
+#' content depends on the user whose API key is in use. Administrator accounts
+#' will receive data for all content on the server. Publishers will receive data
+#' for all content they own or collaborate on.
+#'
+#' If no date-times are provided, all usage data will be returned.
+#'
+#' @param client A `Connect` R6 client object.
+#' @param from Optional date-time (`POSIXct` or `POSIXlt`). Only
+#'   records after this time are returned. If not provided, records
+#'   are returned back to the first record available.
+#' @param to Optional date-time (`POSIXct` or `POSIXlt`). Only records
+#'   before this time are returned. If not provided, all records up to
+#'   the most recent are returned.
+#'
+#' @return A list of usage records. Each record is a list with all elements
+#'   as character strings unless otherwise specified.
+#'
+#' * `id`: An integer identifier for the hit.
+#' * `user_guid`: The user GUID if the visitor is logged-in, `NULL` for
+#'   anonymous hits.
+#' * `content_guid`: The GUID of the visited content.
+#' * `timestamp`: The time of the hit in RFC3339 format.
+#' * `data`: A nested list with optional fields:
+#'     * `path`: The request path (if recorded).
+#'     * `user_agent`: The user agent string (if available).
+#'
+#' Use [as.data.frame()] or [tibble::as_tibble()] to convert to a flat
+#' table with parsed types. In the resulting data frame:
+#'
+#' * `timestamp` is parsed to `POSIXct`.
+#' * `path` and `user_agent` are extracted from the nested `data` field.
+#'
+#' By default, [as.data.frame()] attempts to extract the nested fields using
+#' the \pkg{tidyr} package. If \pkg{tidyr} is not available, or if you want to
+#' skip unnesting, call `as.data.frame(x, unnest = FALSE)` to leave `data` as
+#' a list-column.
+#'
+#' @details
+#'
+#' The data returned by `get_usage()` includes all content types. For Shiny
+#' content, the `timestamp` indicates the *start* of the Shiny session.
+#' Additional fields for Shiny and non-Shiny are available respectively from
+#' [get_usage_shiny()] and [get_usage_static()]. `get_usage_shiny()` includes a
+#' field for the session end time; `get_usage_static()` includes variant,
+#' rendering, and bundle identifiers for the visited content.
+#'
+#' When possible, however, we recommend using `get_usage()` over
+#' `get_usage_static()` or `get_usage_shiny()`, as it is faster and more efficient.
+#'
+#' @seealso [as.data.frame.connect_list_hits()], [as_tibble.connect_list_hits()]
+#'
+#' @examples
+#' \dontrun{
+#' client <- connect()
+#'
+#' # Fetch the last 2 days of hits
+#' usage <- get_usage(client, from = Sys.Date() - 2, to = Sys.Date())
+#'
+#' # Fetch usage after a specified date and convert to a data frame.
+#' usage <- get_usage(
+#'   client,
+#'   from = as.POSIXct("2025-05-02 12:40:00", tz = "UTC")
+#' )
+#'
+#' # Fetch all usage
+#' usage <- get_usage(client)
+#'
+#' # Convert to tibble or data frame
+#' usage_df <- tibble::as_tibble(usage)
+#'
+#' # Skip unnesting if tidyr is not installed
+#' usage_df <- as.data.frame(usage, unnest = FALSE)
+#' }
+#'
+#' @export
+get_usage <- function(client, from = NULL, to = NULL) {
+  error_if_less_than(client$version, "2025.04.0")
+
+  usage <- client$GET(
+    v1_url("instrumentation", "content", "hits"),
+    query = list(
+      from = make_timestamp(from),
+      to = make_timestamp(to)
+    )
+  )
+
+  class(usage) <- c("connect_list_hits", class(usage))
+  usage
+}
+
+#' Convert usage data to a data frame
+#'
+#' @description
+#' Converts an object returned by [get_usage()] into a data frame with parsed
+#' column types. By default, extracts `path` and `user_agent` from the `data`
+#' field, if available.
+#'
+#' @param x A `connect_list_hits` object (from [get_usage()]).
+#' @param row.names Passed to [base::as.data.frame()].
+#' @param optional Passed to [base::as.data.frame()].
+#' @param ... Passed to [base::as.data.frame()].
+#' @param unnest Logical; if `TRUE` (default), extracts nested fields using
+#'   \pkg{tidyr}. Set to `FALSE` to skip unnesting.
+#'
+#' @return A `data.frame` with one row per usage record.
+#' @export
+#' @method as.data.frame connect_list_hits
+as.data.frame.connect_list_hits <- function(
+  x,
+  row.names = NULL, # nolint
+  optional = FALSE,
+  ...,
+  unnest = TRUE
+) {
+  usage_df <- parse_connectapi_typed(x, connectapi_ptypes$usage)
+  if (unnest) {
+    if (!requireNamespace("tidyr", quietly = TRUE)) {
+      stop(
+        "`unnest = TRUE` requires tidyr. Install tidyr or set `unnest = FALSE`.",
+        call. = FALSE
+      )
+    }
+    usage_df <- tidyr::unnest_wider(
+      usage_df,
+      "data",
+      ptype = list(path = character(0), user_agent = character(0))
+    )
+  }
+  as.data.frame(usage_df, row.names = row.names, optional = optional, ...)
+}
+
+#' Convert usage data to a tibble
+#'
+#' @description
+#' Converts an object returned by [get_usage()] to a tibble via
+#' [as.data.frame.connect_list_hits()].
+#'
+#' @param x A `connect_list_hits` object.
+#' @param ... Passed to [as.data.frame()].
+#'
+#' @return A tibble with one row per usage record.
+#' @export
+#' @importFrom tibble as_tibble
+#' @method as_tibble connect_list_hits
+as_tibble.connect_list_hits <- function(x, ...) {
+  tibble::as_tibble(as.data.frame(x, ...))
+}
 
 #' Get Audit Logs from Posit Connect Server
 #'
@@ -519,8 +718,13 @@ get_usage_static <- function(src, content_guid = NULL,
 #' }
 #'
 #' @export
-get_audit_logs <- function(src, limit = 500, previous = NULL,
-                           nxt = NULL, asc_order = TRUE) {
+get_audit_logs <- function(
+  src,
+  limit = 500,
+  previous = NULL,
+  nxt = NULL,
+  asc_order = TRUE
+) {
   validate_R6_class(src, "Connect")
 
   res <- src$audit_logs(
@@ -590,6 +794,8 @@ get_procs <- function(src) {
 #' default to `urn:ietf:params:oauth:token-type:access_token`. Otherwise, this can
 #' be set to `urn:ietf:params:aws:token-type:credentials` for AWS integrations or
 #' `urn:posit:connect:api-key` for Connect API Key integrations.
+#' @param audience Optional. The GUID of an OAuth integration associated with
+#' this piece of content.
 #'
 #' @examples
 #' \dontrun{
@@ -614,18 +820,28 @@ get_procs <- function(src) {
 #' Please see https://docs.posit.co/connect/user/oauth-integrations/#obtaining-a-viewer-oauth-access-token
 #' for more information.
 #'
+#' @seealso [get_integrations()], [get_oauth_content_credentials()]
+#'
 #' @export
-get_oauth_credentials <- function(connect, user_session_token, requested_token_type = NULL) {
+get_oauth_credentials <- function(
+  connect,
+  user_session_token,
+  requested_token_type = NULL,
+  audience = NULL
+) {
   validate_R6_class(connect, "Connect")
-  if (is.null(requested_token_type)) {
-    requested_token_type <- "urn:ietf:params:oauth:token-type:access_token"
+
+  if (!is.null(audience)) {
+    error_if_less_than(connect$version, "2025.07.0")
   }
+
   url <- v1_url("oauth", "integrations", "credentials")
   body <- list(
     grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
     subject_token_type = "urn:posit:connect:user-session-token",
     subject_token = user_session_token,
-    requested_token_type = requested_token_type
+    requested_token_type = requested_token_type,
+    audience = audience
   )
   connect$POST(
     url,
@@ -647,6 +863,8 @@ get_oauth_credentials <- function(connect, user_session_token, requested_token_t
 #' will default to `urn:ietf:params:oauth:token-type:access_token`. Otherwise,
 #' this can be set to `urn:ietf:params:aws:token-type:credentials` for AWS
 #' integrations or `urn:posit:connect:api-key` for Connect API Key integrations.
+#' @param audience Optional. The GUID of an OAuth integration associated with
+#' this piece of content.
 #'
 #' @examples
 #' \dontrun{
@@ -670,29 +888,37 @@ get_oauth_credentials <- function(connect, user_session_token, requested_token_t
 #' Please see https://docs.posit.co/connect/user/oauth-integrations/#obtaining-a-service-account-oauth-access-token
 #' for more information.
 #'
+#' @seealso [get_integrations()], [get_oauth_credentials()]
+#'
 #' @export
 get_oauth_content_credentials <- function(
   connect,
   content_session_token = NULL,
-  requested_token_type = NULL
+  requested_token_type = NULL,
+  audience = NULL
 ) {
   validate_R6_class(connect, "Connect")
   error_if_less_than(connect$version, "2024.12.0")
+
+  if (!is.null(audience)) {
+    error_if_less_than(connect$version, "2025.07.0")
+  }
+
   if (is.null(content_session_token)) {
     content_session_token <- Sys.getenv("CONNECT_CONTENT_SESSION_TOKEN")
     if (nchar(content_session_token) == 0) {
-      stop("Could not find the CONNECT_CONTENT_SESSION_TOKEN environment variable.")
+      stop(
+        "Could not find the CONNECT_CONTENT_SESSION_TOKEN environment variable."
+      )
     }
-  }
-  if (is.null(requested_token_type)) {
-    requested_token_type <- "urn:ietf:params:oauth:token-type:access_token"
   }
   url <- v1_url("oauth", "integrations", "credentials")
   body <- list(
     grant_type = "urn:ietf:params:oauth:grant-type:token-exchange",
     subject_token_type = "urn:posit:connect:content-session-token",
     subject_token = content_session_token,
-    requested_token_type = requested_token_type
+    requested_token_type = requested_token_type,
+    audience = audience
   )
   connect$POST(
     url,
@@ -708,6 +934,8 @@ get_oauth_content_credentials <- function(
 #' can only be obtained when the content is running on a Connect server. The token
 #' identifies the user who is viewing the content interactively on the Connect server.
 #' Read this value from the HTTP header: `Posit-Connect-User-Session-Token`
+#' @param audience Optional. The GUID of an OAuth integration associated with
+#' this piece of content.
 #'
 #' @return The AWS credentials as a list with fields named `access_key_id`,
 #' `secret_access_key`, `session_token`, and `expiration`.
@@ -753,12 +981,18 @@ get_oauth_content_credentials <- function(
 #' }
 #'
 #' @export
-get_aws_credentials <- function(connect, user_session_token) {
+get_aws_credentials <- function(connect, user_session_token, audience = NULL) {
   error_if_less_than(connect$version, "2025.03.0")
+
+  if (!is.null(audience)) {
+    error_if_less_than(connect$version, "2025.07.0")
+  }
+
   response <- get_oauth_credentials(
     connect,
     user_session_token,
-    requested_token_type = "urn:ietf:params:aws:token-type:credentials"
+    requested_token_type = "urn:ietf:params:aws:token-type:credentials",
+    audience = audience
   )
 
   # Extract access token and decode it
@@ -781,6 +1015,8 @@ get_aws_credentials <- function(connect, user_session_token) {
 #' token identifies the service account integration previously configured by
 #' the publisher on the Connect server. Defaults to the value from the
 #' environment variable: `CONNECT_CONTENT_SESSION_TOKEN`
+#' @param audience Optional. The GUID of an OAuth integration associated with
+#' this piece of content.
 #'
 #' @return The AWS credentials as a list with fields named `access_key_id`,
 #' `secret_access_key`, `session_token`, and `expiration`.
@@ -820,12 +1056,18 @@ get_aws_credentials <- function(connect, user_session_token) {
 #' }
 #'
 #' @export
-get_aws_content_credentials <- function(connect, content_session_token = NULL) {
+get_aws_content_credentials <- function(connect, content_session_token = NULL, audience = NULL) {
   error_if_less_than(connect$version, "2025.03.0")
+
+  if (!is.null(audience)) {
+    error_if_less_than(connect$version, "2025.07.0")
+  }
+
   response <- get_oauth_content_credentials(
     connect,
     content_session_token,
-    requested_token_type = "urn:ietf:params:aws:token-type:credentials"
+    requested_token_type = "urn:ietf:params:aws:token-type:credentials",
+    audience = audience
   )
 
   # Extract access token and decode it
@@ -891,7 +1133,7 @@ get_runtimes <- function(client, runtimes = NULL) {
 
   purrr::map_dfr(runtimes, function(runtime) {
     res <- client$GET(paste0("v1/server_settings/", runtime))
-    res_df <- purrr::map_dfr(res$installations, ~tibble::as_tibble(.))
+    res_df <- purrr::map_dfr(res$installations, ~ tibble::as_tibble(.))
     tibble::add_column(res_df, runtime = runtime, .before = 1)
   })
 }

@@ -8,7 +8,8 @@ test_that("can create content", {
   expect_equal(cont1$name, cont1_name)
   expect_equal(cont1$title, cont1_title)
 
-  get_cont1 <- test_conn_1$content(guid = cont1$guid)
+  # Use include = NULL because we aren't passing the include in content_create()
+  get_cont1 <- test_conn_1$content(guid = cont1$guid, include = NULL)
   expect_identical(get_cont1, cont1)
   cont1_guid <<- cont1$guid
 })
@@ -19,11 +20,17 @@ test_that("can upload and deploy content", {
   )
   expect_true(fs::file_exists(cont1_bundle$path))
 
-  res <- test_conn_1$content_upload(bundle_path = cont1_bundle$path, guid = cont1_guid)
+  res <- test_conn_1$content_upload(
+    bundle_path = cont1_bundle$path,
+    guid = cont1_guid
+  )
   expect_false(is.null(res))
   expect_silent(as.integer(res[["bundle_id"]]))
 
-  task <- test_conn_1$content_deploy(guid = cont1_guid, bundle_id = res[["bundle_id"]])
+  task <- test_conn_1$content_deploy(
+    guid = cont1_guid,
+    bundle_id = res[["bundle_id"]]
+  )
   expect_type(task[["task_id"]], "character")
 })
 
@@ -81,9 +88,11 @@ test_that("content_ensure works with name", {
   c_title <- "Some Title"
   c_desc <- "Some Description"
   expect_message(
-    c_diff <- content_ensure(test_conn_1,
+    c_diff <- content_ensure(
+      test_conn_1,
       name = c_newname,
-      title = c_title, description = c_desc
+      title = c_title,
+      description = c_desc
     )
   )
 
@@ -99,16 +108,31 @@ test_that("content_ensure fails when not permitted", {
   permit_name <- create_random_name()
 
   # duplicates to ensure it does not create
-  expect_error(content_ensure(test_conn_1, guid = permit_guid, .permitted = c("existing")), "not found on")
-  expect_error(content_ensure(test_conn_1, guid = permit_guid, .permitted = c("existing")), "not found on")
+  expect_error(
+    content_ensure(test_conn_1, guid = permit_guid, .permitted = c("existing")),
+    "not found on"
+  )
+  expect_error(
+    content_ensure(test_conn_1, guid = permit_guid, .permitted = c("existing")),
+    "not found on"
+  )
 
   # duplicates to ensure it does not create
-  expect_error(content_ensure(test_conn_1, name = permit_name, .permitted = c("existing")), "not found on")
-  expect_error(content_ensure(test_conn_1, name = permit_name, .permitted = c("existing")), "not found on")
+  expect_error(
+    content_ensure(test_conn_1, name = permit_name, .permitted = c("existing")),
+    "not found on"
+  )
+  expect_error(
+    content_ensure(test_conn_1, name = permit_name, .permitted = c("existing")),
+    "not found on"
+  )
 
   # actually create
   invisible(content_ensure(test_conn_1, name = permit_name))
 
   # error because we expect new
-  expect_error(content_ensure(test_conn_1, name = permit_name, .permitted = c("new")), "already exists")
+  expect_error(
+    content_ensure(test_conn_1, name = permit_name, .permitted = c("new")),
+    "already exists"
+  )
 })

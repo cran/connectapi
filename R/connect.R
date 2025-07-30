@@ -45,9 +45,11 @@ Connect <- R6::R6Class(
     #' @param server The base URL of your Posit Connect server.
     #' @param api_key Your Posit Connect API key.
     initialize = function(server, api_key) {
-      message(glue::glue("Defining Connect with server: {server}"))
+      message_if_not_testing(glue::glue("Defining Connect with server: {server}"))
       if (is.null(httr::parse_url(server)$scheme)) {
-        stop(glue::glue("ERROR: Please provide a protocol (http / https). You gave: {server}"))
+        stop(glue::glue(
+          "ERROR: Please provide a protocol (http / https). You gave: {server}"
+        ))
       }
       self$server <- base::sub("^(.*)/$", "\\1", server)
       self$api_key <- api_key
@@ -86,20 +88,28 @@ Connect <- R6::R6Class(
     #' @param res HTTP result.
     raise_error = function(res) {
       if (httr::http_error(res)) {
-        err <- sprintf(
-          "%s request failed with %s",
-          res$request$url,
-          httr::http_status(res)$message
-        )
-        tryCatch(
+        connect_error_details <- tryCatch(
           {
-            message(capture.output(str(httr::content(res))))
+            cont <- httr::content(res)
+            code <- sprintf("code: %d", cont$code)
+            error <- sprintf("error: %s", cont$error)
+            if (length(code) == 0 & length(error) == 0) {
+              ""
+            } else {
+              paste0("(", paste0(c(code, error), collapse = ", "), ")")
+            }
           },
-          error = function(e) {
-            message(e)
-          }
+          error = function(e) ""
         )
-        stop(err)
+
+        err <- sprintf(
+          "%s request failed with %s %s",
+          res$request$url,
+          httr::http_status(res)$message,
+          connect_error_details
+        )
+
+        stop(err, call. = FALSE)
       }
     },
 
@@ -179,13 +189,22 @@ Connect <- R6::R6Class(
     #' @param parser How the response is parsed. If `NULL`, the `httr_response`
     #' will be returned. Otherwise, the argument is forwarded to
     #' `httr::content(res, as = parser)`.
-    PUT = function(path,
-                   body = "{}",
-                   ...,
-                   url = self$api_url(path),
-                   encode = "json",
-                   parser = "parsed") {
-      self$request("PUT", url, parser = parser, body = body, encode = encode, ...)
+    PUT = function(
+      path,
+      body = "{}",
+      ...,
+      url = self$api_url(path),
+      encode = "json",
+      parser = "parsed"
+    ) {
+      self$request(
+        "PUT",
+        url,
+        parser = parser,
+        body = body,
+        encode = encode,
+        ...
+      )
     },
 
     #' @description Perform an HTTP HEAD request of the named API path.
@@ -220,13 +239,22 @@ Connect <- R6::R6Class(
     #' @param parser How the response is parsed. If `NULL`, the `httr_response`
     #' will be returned. Otherwise, the argument is forwarded to
     #' `httr::content(res, as = parser)`.
-    PATCH = function(path,
-                     body = "{}",
-                     ...,
-                     url = self$api_url(path),
-                     encode = "json",
-                     parser = "parsed") {
-      self$request("PATCH", url, parser = parser, body = body, encode = encode, ...)
+    PATCH = function(
+      path,
+      body = "{}",
+      ...,
+      url = self$api_url(path),
+      encode = "json",
+      parser = "parsed"
+    ) {
+      self$request(
+        "PATCH",
+        url,
+        parser = parser,
+        body = body,
+        encode = encode,
+        ...
+      )
     },
 
     #' @description Perform an HTTP POST request of the named API path.
@@ -239,13 +267,22 @@ Connect <- R6::R6Class(
     #' @param parser How the response is parsed. If `NULL`, the `httr_response`
     #' will be returned. Otherwise, the argument is forwarded to
     #' `httr::content(res, as = parser)`.
-    POST = function(path,
-                    body = "{}",
-                    ...,
-                    url = self$api_url(path),
-                    encode = "json",
-                    parser = "parsed") {
-      self$request("POST", url, parser = parser, body = body, encode = encode, ...)
+    POST = function(
+      path,
+      body = "{}",
+      ...,
+      url = self$api_url(path),
+      encode = "json",
+      parser = "parsed"
+    ) {
+      self$request(
+        "POST",
+        url,
+        parser = parser,
+        body = body,
+        encode = encode,
+        ...
+      )
     },
 
     #' @description Perform an HTTP GET request of the "me" server endpoint.
@@ -354,53 +391,6 @@ Connect <- R6::R6Class(
       invisible(self$DELETE(v1_url("tags", id)))
     },
 
-    # content listing ----------------------------------------------------------
-
-    # filter is a named list, e.g. list(name = 'appname')
-    # this function supports pages
-    #' @description Get content items.
-    #' @param filter Named list containing filter conditions.
-    #' @param .collapse How multiple filters are combined.
-    #' @param .limit The limit.
-    #' @param page_size The page size.
-    get_apps = function(filter = NULL, .collapse = "&", .limit = Inf, page_size = 25) {
-      path <- unversioned_url("applications")
-      query <- list(
-        count = min(page_size, .limit)
-      )
-      if (!is.null(filter)) {
-        query$filter <- paste(sapply(seq_along(filter), function(i) {
-          sprintf("%s:%s", names(filter)[i], filter[[i]])
-        }), collapse = .collapse)
-      }
-
-      prg <- optional_progress_bar(
-        format = "downloading page :current (:tick_rate/sec) :elapsedfull",
-        total = NA,
-        clear = FALSE
-      )
-
-      # handle paging
-      prg$tick()
-      res <- self$GET(path, query = query)
-
-      all <- res$applications
-      all_l <- length(all)
-      query$start <- 1
-      while (length(res$applications) > 0 && all_l < .limit) {
-        prg$tick()
-
-        query$start <- query$start + page_size
-        query$page_size <- min(page_size, .limit - all_l)
-        query$cont <- res$continuation
-        res <- self$GET(path, query = query)
-
-        all <- c(all, res$applications)
-        all_l <- length(all)
-      }
-      all
-    },
-
     #' @description Get a schedule.
     #' @param schedule_id The schedule identifier.
     get_schedule = function(schedule_id) {
@@ -453,9 +443,14 @@ Connect <- R6::R6Class(
     #' @param owner_guid The target content owner.
     #' @param name The target name.
     #' @param include Additional response fields.
-    content = function(guid = NULL, owner_guid = NULL, name = NULL, include = "tags,owner") {
+    content = function(
+      guid = NULL,
+      owner_guid = NULL,
+      name = NULL,
+      include = "tags,owner"
+    ) {
       if (!is.null(guid)) {
-        return(self$GET(v1_url("content", guid)))
+        return(self$GET(v1_url("content", guid), query = list(include = include)))
       }
 
       query <- list(
@@ -553,14 +548,16 @@ Connect <- R6::R6Class(
     #' @param user_must_set_password Indicates that user sets password on first login.
     #' @param user_role Role for user.
     #' @param unique_id Identifier for user.
-    users_create = function(username,
-                            email,
-                            first_name = NULL,
-                            last_name = NULL,
-                            password = NULL,
-                            user_must_set_password = NULL,
-                            user_role = NULL,
-                            unique_id = NULL) {
+    users_create = function(
+      username,
+      email,
+      first_name = NULL,
+      last_name = NULL,
+      password = NULL,
+      user_must_set_password = NULL,
+      user_role = NULL,
+      unique_id = NULL
+    ) {
       path <- v1_url("users")
       self$POST(
         path = path,
@@ -708,14 +705,16 @@ Connect <- R6::R6Class(
     #' @param previous Previous item.
     #' @param nxt Next item.
     #' @param asc_order Indicates ascending result order.
-    inst_content_visits = function(content_guid = NULL,
-                                   min_data_version = NULL,
-                                   from = NULL,
-                                   to = NULL,
-                                   limit = 500,
-                                   previous = NULL,
-                                   nxt = NULL,
-                                   asc_order = TRUE) {
+    inst_content_visits = function(
+      content_guid = NULL,
+      min_data_version = NULL,
+      from = NULL,
+      to = NULL,
+      limit = 500,
+      previous = NULL,
+      nxt = NULL,
+      asc_order = TRUE
+    ) {
       path <- v1_url("instrumentation", "content", "visits")
       query <- list(
         content_guid = content_guid,
@@ -744,14 +743,16 @@ Connect <- R6::R6Class(
     #' @param previous Previous item.
     #' @param nxt Next item.
     #' @param asc_order Indicates ascending result order.
-    inst_shiny_usage = function(content_guid = NULL,
-                                min_data_version = NULL,
-                                from = NULL,
-                                to = NULL,
-                                limit = 500,
-                                previous = NULL,
-                                nxt = NULL,
-                                asc_order = TRUE) {
+    inst_shiny_usage = function(
+      content_guid = NULL,
+      min_data_version = NULL,
+      from = NULL,
+      to = NULL,
+      limit = 500,
+      previous = NULL,
+      nxt = NULL,
+      asc_order = TRUE
+    ) {
       path <- v1_url("instrumentation", "shiny", "usage")
       query <- list(
         content_guid = content_guid,
@@ -785,7 +786,9 @@ Connect <- R6::R6Class(
       warn_experimental("repo_account")
       parsed_url <- httr::parse_url(host)
       if (is.null(parsed_url$scheme) || is.null(parsed_url$hostname)) {
-        stop(glue::glue("Scheme and hostname must be provided (i.e. 'https://github.com'). You provided '{host}'"))
+        stop(glue::glue(
+          "Scheme and hostname must be provided (i.e. 'https://github.com'). You provided '{host}'"
+        ))
       }
       host <- glue::glue(parsed_url$scheme, "://", parsed_url$hostname)
       path <- unversioned_url("repo", "account")
@@ -815,7 +818,11 @@ Connect <- R6::R6Class(
     #' @param start Starting time.
     #' @param end Ending time.
     #' @param detailed Indicates detailed schedule information.
-    schedules = function(start = Sys.time(), end = Sys.time() + 60 * 60 * 24 * 7, detailed = FALSE) {
+    schedules = function(
+      start = Sys.time(),
+      end = Sys.time() + 60 * 60 * 24 * 7,
+      detailed = FALSE
+    ) {
       warn_experimental("schedules")
       url <- v1_url("experimental", "schedules")
       query_params <- list(
@@ -851,7 +858,9 @@ Connect <- R6::R6Class(
     docs = function(docs = "api", browse = TRUE) {
       stopifnot(docs %in% c("admin", "user", "api"))
       url <- paste0(self$server, "/__docs__/", docs)
-      if (browse) utils::browseURL(url)
+      if (browse) {
+        utils::browseURL(url)
+      }
       url
     },
 
@@ -860,7 +869,12 @@ Connect <- R6::R6Class(
     #' @param previous Previous item.
     #' @param nxt Next item.
     #' @param asc_order Indicates ascending result order.
-    audit_logs = function(limit = 500, previous = NULL, nxt = NULL, asc_order = TRUE) {
+    audit_logs = function(
+      limit = 500,
+      previous = NULL,
+      nxt = NULL,
+      asc_order = TRUE
+    ) {
       path <- v1_url("audit_logs")
       query <- list(
         limit = valid_page_size(limit),
@@ -880,7 +894,11 @@ Connect <- R6::R6Class(
 
     #' @description Get R installations.
     server_settings_r = function() {
-      lifecycle::deprecate_soft("0.3.1", "Connect$server_settings_r()", "get_runtimes()")
+      lifecycle::deprecate_soft(
+        "0.3.1",
+        "Connect$server_settings_r()",
+        "get_runtimes()"
+      )
       self$GET(v1_url("server_settings", "r"))
     },
 
@@ -892,7 +910,8 @@ Connect <- R6::R6Class(
     # end --------------------------------------------------------
   ),
   private = list(
-    .version = NULL
+    .version = NULL,
+    .timezones = NULL
   ),
   active = list(
     #' @field version The server version.
@@ -901,6 +920,18 @@ Connect <- R6::R6Class(
         private$.version <- safe_server_version(self)
       }
       private$.version
+    },
+    #' @field timezones The server timezones.
+    timezones = function() {
+      if (is.null(private$.timezones)) {
+        private$.timezones <- tryCatch(
+          self$GET(v1_url("timezones")),
+          error = function(e) {
+            self$GET(unversioned_fallback_url("timezones"))
+          }
+        )
+      }
+      private$.timezones
     }
   )
 )
@@ -933,6 +964,7 @@ Connect <- R6::R6Class(
 #'   key here you can test a visitor client with differently-scoped
 #'   permissions.
 #' @param prefix The prefix used to determine environment variables
+#' @param audience Optional. The GUID of a Connect API integration associated with this piece of content.
 #' @param ... Additional arguments. Not used at present
 #' @param .check_is_fatal Whether to fail if "check" requests fail. Useful in
 #'   rare cases where more http request customization is needed for requests to
@@ -964,13 +996,15 @@ Connect <- R6::R6Class(
 #'
 #' @export
 connect <- function(
-    server = Sys.getenv(paste0(prefix, "_SERVER"), NA_character_),
-    api_key = Sys.getenv(paste0(prefix, "_API_KEY"), NA_character_),
-    token,
-    token_local_testing_key = api_key,
-    prefix = "CONNECT",
-    ...,
-    .check_is_fatal = TRUE) {
+  server = Sys.getenv(paste0(prefix, "_SERVER"), NA_character_),
+  api_key = Sys.getenv(paste0(prefix, "_API_KEY"), NA_character_),
+  token,
+  token_local_testing_key = api_key,
+  prefix = "CONNECT",
+  audience = NULL,
+  ...,
+  .check_is_fatal = TRUE
+) {
   if (is.null(api_key) || is.na(api_key) || nchar(api_key) == 0) {
     msg <- "Invalid (empty) API key. Please provide a valid API key"
     if (.check_is_fatal) {
@@ -987,7 +1021,8 @@ connect <- function(
       visitor_creds <- get_oauth_credentials(
         con,
         user_session_token = token,
-        requested_token_type = "urn:posit:connect:api-key"
+        requested_token_type = "urn:posit:connect:api-key",
+        audience = audience
       )
       con <- connect(server = server, api_key = visitor_creds$access_token)
     } else {

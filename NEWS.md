@@ -1,3 +1,36 @@
+# connectapi 0.8.0
+
+## Breaking changes
+
+- `get_apps()` has been removed in favor of `get_content()`.
+  `dashboard_url_chr()` has been removed. (#415)
+
+## New features
+
+- New `get_usage()` function returns content usage data from Connect's `GET
+  v1/instrumentation/content/hits` endpoint on Connect v2025.04.0 and higher.
+  (#390)
+- The `get_oauth_credentials()` and `connect()` functions have a new `audience`
+  parameter. On Connect v2025.07.0 and higher, pass the GUID of an integration
+  to this parameter to specify which OAuth integration you wish to use. (#423)
+- New `get_integrations()` function lists all OAuth integrations available on the
+  Connect server from the `GET v1/oauth/integrations` endpoint on Connect v2024.12.0
+  and higher. (#413)
+
+## Enhancements and fixes
+
+- `get_groups()` now paginates through all results when a `prefix` is provided,
+  if the Connect server API version supports pagination. (#328)
+- Timestamps from the Connect server are now displayed in your local time zone,
+  rather than in UTC. (#400)
+- `get_content()` now includes vanity URLs in the returned data frame on Connect
+  v2024.06.0 and later. (#398)
+- Removed unnecessary null check with default from `get_oauth_credentials()` and
+  `get_oauth_content_credentials()` functions for `requested_token_type` parameter
+  that was causing issues with Connect < 2025.03.0. (#407)
+- `Connect$content()` now respects the `include` argument when a `guid` is
+  provided. (#411)
+
 # connectapi 0.7.0
 
 ## New features

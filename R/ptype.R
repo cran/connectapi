@@ -1,5 +1,5 @@
 NA_datetime_ <- # nolint: object_name_linter
-  vctrs::new_datetime(NA_real_, tzone = "UTC")
+  vctrs::new_datetime(NA_real_, tzone = Sys.timezone())
 NA_list_ <- # nolint: object_name_linter
   list(list())
 
@@ -38,6 +38,13 @@ connectapi_ptypes <- list(
     "bundle_id" = NA_character_,
     "data_version" = NA_integer_
   ),
+  usage = tibble::tibble(
+    "id" = NA_integer_,
+    "user_guid" = NA_character_,
+    "content_guid" = NA_character_,
+    "timestamp" = NA_datetime_,
+    "data" = NA_list_
+  ),
   content = tibble::tibble(
     "guid" = NA_character_,
     "name" = NA_character_,
@@ -69,8 +76,10 @@ connectapi_ptypes <- list(
     "content_url" = NA_character_,
     "dashboard_url" = NA_character_,
     "app_role" = NA_character_,
+    "vanity_url" = NA_character_,
     "id" = NA_character_,
     "owner" = NA_list_,
+    "tags" = NA_list_,
   ),
   content_old = tibble::tibble(
     "id" = NA_integer_,
@@ -262,5 +271,16 @@ connectapi_ptypes <- list(
     name = NA_character_,
     version = NA_character_,
     hash = NA_character_
+  ),
+  integrations = tibble::tibble(
+    id = NA_character_,
+    guid = NA_character_,
+    created_time = NA_datetime_,
+    updated_time = NA_datetime_,
+    name = NA_character_,
+    description = NA_character_,
+    template = NA_character_,
+    auth_type = NA_character_,
+    config = NA_list_
   )
 )
