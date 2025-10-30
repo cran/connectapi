@@ -1,0 +1,17 @@
+// Used in test-content.R
+{
+    "total": 2,
+    "current_page": 1,
+    "results": [
+        {
+            "guid": "c9f68287",
+            "name": "sea-bream-report",
+            "title": "sea bream report"
+        },
+        {
+            "guid": "53032a0e",
+            "name": "sea-bream-dashboard",
+            "title": "sea bream dashboard"
+        }
+    ]
+}

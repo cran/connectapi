@@ -36,16 +36,13 @@ Connect <- R6::R6Class(
     #' @field using_auth Indicates that the API key is added to each HTTP call.
     using_auth = TRUE,
 
-    #' @description Return this connect.
-    get_connect = function() {
-      self
-    },
-
     #' @description Initialize a new connect.
     #' @param server The base URL of your Posit Connect server.
     #' @param api_key Your Posit Connect API key.
     initialize = function(server, api_key) {
-      message_if_not_testing(glue::glue("Defining Connect with server: {server}"))
+      message_if_not_testing(glue::glue(
+        "Defining Connect with server: {server}"
+      ))
       if (is.null(httr::parse_url(server)$scheme)) {
         stop(glue::glue(
           "ERROR: Please provide a protocol (http / https). You gave: {server}"
@@ -450,7 +447,10 @@ Connect <- R6::R6Class(
       include = "tags,owner"
     ) {
       if (!is.null(guid)) {
-        return(self$GET(v1_url("content", guid), query = list(include = include)))
+        return(self$GET(
+          v1_url("content", guid),
+          query = list(include = include)
+        ))
       }
 
       query <- list(

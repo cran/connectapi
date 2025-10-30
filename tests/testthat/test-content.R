@@ -466,3 +466,199 @@ test_that("get_content_packages() gets packages", {
     )
   })
 })
+
+# content search ----
+
+with_mock_dir("2025.09.0", {
+  client <- Connect$new(
+    server = "https://connect.example",
+    api_key = "not-a-key"
+  )
+
+  test_that("content search returns the expected list of content", {
+    res <- search_content(client, q = "sea bream")
+    expect_equal(
+      class(res[[1]]),
+      c("Content", "R6")
+    )
+    expect_equal(
+      purrr::map_chr(res, list("content", "guid")),
+      c("c9f68287", "53032a0e")
+    )
+    expect_equal(
+      purrr::map_chr(res, list("content", "title")),
+      c("sea bream report", "sea bream dashboard")
+    )
+  })
+
+  test_that("content search fetches multiple pages correctly", {
+    res <- search_content(client, q = "blobfish")
+    expect_equal(length(res), 4)
+    expect_equal(
+      purrr::map_chr(res, list("content", "title")),
+      c(
+        "blobfish dashboard",
+        "blobfish api",
+        "blobfish report",
+        "blobfish report (v2)"
+      )
+    )
+  })
+
+  test_that("search_content() can be converted to a data frame correctly", {
+    content_df <- search_content(client, q = "sea bream") |>
+      as_tibble()
+    expect_named(
+      content_df,
+      c(
+        "guid",
+        "name",
+        "title",
+        "description",
+        "access_type",
+        "connection_timeout",
+        "read_timeout",
+        "init_timeout",
+        "idle_timeout",
+        "max_processes",
+        "min_processes",
+        "max_conns_per_process",
+        "load_factor",
+        "created_time",
+        "last_deployed_time",
+        "bundle_id",
+        "app_mode",
+        "content_category",
+        "parameterized",
+        "cluster_name",
+        "image_name",
+        "r_version",
+        "py_version",
+        "quarto_version",
+        "run_as",
+        "run_as_current_user",
+        "owner_guid",
+        "content_url",
+        "dashboard_url",
+        "app_role",
+        "vanity_url",
+        "id",
+        "owner",
+        "tags"
+      )
+    )
+    expect_equal(
+      content_df$title,
+      c("sea bream report", "sea bream dashboard")
+    )
+    expect_equal(
+      content_df$guid,
+      c("c9f68287", "53032a0e")
+    )
+  })
+})
+
+test_that("content search uses default page_size of 500 and page_number of 1", {
+  without_internet(
+    expect_GET(
+      search_content(client, q = "bream"),
+      "https://connect.example/__api__/v1/search/content?q=bream&page_number=1&page_size=500&include=owner%2Cvanity_url" #nolint
+    )
+  )
+})
+
+test_that("content search passes arbitrary parameters through ... to query string", {
+  without_internet(
+    expect_GET(
+      search_content(
+        client,
+        q = "bream",
+        future_param = "value"
+      ),
+      "https://connect.example/__api__/v1/search/content?q=bream&page_number=1&page_size=500&include=owner%2Cvanity_url&future_param=value" #nolint
+    )
+  )
+})
+
+test_that("the inner .search_content() func calls the endpoint correctly", {
+  without_internet(
+    expect_GET(
+      .search_content(
+        client,
+        q = "bream",
+        page_number = 2,
+        page_size = 20,
+        include = "owner"
+      ),
+      "https://connect.example/__api__/v1/search/content?q=bream&page_number=2&page_size=20&include=owner"
+    )
+  )
+})
+
+test_that("content search errors on Connect < 2024.04.0", {
+  client <- MockConnect$new("2024.04.0")
+  client$mock_response(
+    "GET",
+    "v1/search/content",
+    content = list()
+  )
+  expect_no_error(search_content(client))
+
+  client <- MockConnect$new("2024.03.0")
+  expect_error(
+    search_content(client),
+    "ERROR: This feature requires Posit Connect version 2024.04.0 but you are using 2024.03.0."
+  )
+})
+
+# lock content ----
+
+with_mock_dir("2025.09.0", {
+  test_that("lock_content() and unlock_content() make the expected requests", {
+    client <- Connect$new(
+      server = "https://connect.example",
+      api_key = "not-a-key"
+    )
+    client$version # Hydrate version
+    item <- content_item(client, "6632a162")
+    without_internet({
+      expect_PATCH(
+        lock_content(item),
+        "https://connect.example/__api__/v1/content/6632a162",
+        '{"locked":true,"locked_message":""}'
+      )
+      expect_PATCH(
+        lock_content(item, "ACCESS DENIED"),
+        "https://connect.example/__api__/v1/content/6632a162",
+        '{"locked":true,"locked_message":"ACCESS DENIED"}'
+      )
+      expect_PATCH(
+        unlock_content(item),
+        "https://connect.example/__api__/v1/content/6632a162",
+        '{"locked":false,"locked_message":""}'
+      )
+    })
+  })
+})
+
+test_that("lock_content() and unlock_content() error on Connect < 2024.08.0", {
+  client <- MockConnect$new("2024.07.0")
+  client$mock_response(
+    "GET",
+    "v1/content/test-guid",
+    content = list(
+      guid = "test-guid",
+      title = "Test Content",
+      app_mode = "static"
+    )
+  )
+  item <- content_item(client, "test-guid")
+  expect_error(
+    lock_content(item),
+    "ERROR: This feature requires Posit Connect version 2024.08.0 but you are using 2024.07.0."
+  )
+  expect_error(
+    unlock_content(item),
+    "ERROR: This feature requires Posit Connect version 2024.08.0 but you are using 2024.07.0."
+  )
+})

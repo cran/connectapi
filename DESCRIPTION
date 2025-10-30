@@ -1,7 +1,7 @@
 Type: Package
 Package: connectapi
 Title: Utilities for Interacting with the 'Posit Connect' Server API
-Version: 0.8.0
+Version: 0.9.0
 Authors@R: c(
     person(given = "Toph",
            family = "Allen",
@@ -36,16 +36,16 @@ Suggests: covr, dbplyr, dplyr, ggplot2, gridExtra, httptest, knitr,
 VignetteBuilder: knitr
 Encoding: UTF-8
 Language: en-US
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Config/testthat/edition: 3
 Collate: 'audits.R' 'browse.R' 'connect.R' 'connectapi-package.R'
         'connectapi.R' 'content.R' 'deploy.R' 'get.R' 'git.R'
         'groups.R' 'integrations.R' 'lazy.R' 'page.R' 'parse.R'
         'promote.R' 'ptype.R' 'remote.R' 'runtime-caches.R'
         'schedule.R' 'tags.R' 'utils.R' 'thumbnail.R' 'user.R'
-        'utils-ci.R' 'utils-pipe.R' 'variant.R'
+        'utils-pipe.R' 'variant.R'
 NeedsCompilation: no
-Packaged: 2025-07-30 21:46:47 UTC; toph
+Packaged: 2025-10-30 14:35:21 UTC; toph
 Author: Toph Allen [aut, cre],
   Neal Richardson [aut],
   Sean Lopp [aut],
@@ -53,4 +53,4 @@ Author: Toph Allen [aut, cre],
   Posit, PBC [cph, fnd]
 Maintainer: Toph Allen <toph@posit.co>
 Repository: CRAN
-Date/Publication: 2025-07-30 22:00:11 UTC
+Date/Publication: 2025-10-30 15:00:02 UTC

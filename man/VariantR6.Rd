@@ -39,7 +39,6 @@ Other R6 classes:
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-Variant-get_variant}{\code{Variant$get_variant()}}
 \item \href{#method-Variant-get_variant_remote}{\code{Variant$get_variant_remote()}}
 \item \href{#method-Variant-new}{\code{Variant$new()}}
 \item \href{#method-Variant-send_mail}{\code{Variant$send_mail()}}
@@ -71,10 +70,7 @@ Other R6 classes:
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="environment_all"><a href='../../connectapi/html/Content.html#method-Content-environment_all'><code>connectapi::Content$environment_all()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="environment_set"><a href='../../connectapi/html/Content.html#method-Content-environment_set'><code>connectapi::Content$environment_set()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="get_bundles"><a href='../../connectapi/html/Content.html#method-Content-get_bundles'><code>connectapi::Content$get_bundles()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="get_connect"><a href='../../connectapi/html/Content.html#method-Content-get_connect'><code>connectapi::Content$get_connect()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="get_content"><a href='../../connectapi/html/Content.html#method-Content-get_content'><code>connectapi::Content$get_content()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="get_content_remote"><a href='../../connectapi/html/Content.html#method-Content-get_content_remote'><code>connectapi::Content$get_content_remote()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="internal_content"><a href='../../connectapi/html/Content.html#method-Content-internal_content'><code>connectapi::Content$internal_content()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="packages"><a href='../../connectapi/html/Content.html#method-Content-packages'><code>connectapi::Content$packages()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="permissions"><a href='../../connectapi/html/Content.html#method-Content-permissions'><code>connectapi::Content$permissions()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="permissions_add"><a href='../../connectapi/html/Content.html#method-Content-permissions_add'><code>connectapi::Content$permissions_add()</code></a></span></li>
@@ -83,6 +79,7 @@ Other R6 classes:
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="register_job_kill_order"><a href='../../connectapi/html/Content.html#method-Content-register_job_kill_order'><code>connectapi::Content$register_job_kill_order()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="repo_enable"><a href='../../connectapi/html/Content.html#method-Content-repo_enable'><code>connectapi::Content$repo_enable()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="repo_set"><a href='../../connectapi/html/Content.html#method-Content-repo_set'><code>connectapi::Content$repo_set()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="repository"><a href='../../connectapi/html/Content.html#method-Content-repository'><code>connectapi::Content$repository()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="tag_delete"><a href='../../connectapi/html/Content.html#method-Content-tag_delete'><code>connectapi::Content$tag_delete()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="tag_set"><a href='../../connectapi/html/Content.html#method-Content-tag_set'><code>connectapi::Content$tag_set()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="connectapi" data-topic="Content" data-id="tags"><a href='../../connectapi/html/Content.html#method-Content-tags'><code>connectapi::Content$tags()</code></a></span></li>
@@ -92,19 +89,12 @@ Other R6 classes:
 </details>
 }}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Variant-get_variant"></a>}}
-\if{latex}{\out{\hypertarget{method-Variant-get_variant}{}}}
-\subsection{Method \code{get_variant()}}{
-Get the underlying variant data.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Variant$get_variant()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Variant-get_variant_remote"></a>}}
 \if{latex}{\out{\hypertarget{method-Variant-get_variant_remote}{}}}
 \subsection{Method \code{get_variant_remote()}}{
+Get the underlying variant data.
+
+
 Get and store the (remote) variant data.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Variant$get_variant_remote()}\if{html}{\out{</div>}}

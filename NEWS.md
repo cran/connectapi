@@ -1,3 +1,20 @@
+# connectapi 0.9.0
+
+- New `set_integrations()` function to set the OAuth integration
+  associations for a content item. (#414)
+- New `get_integration()` function to retrieve details of a specific OAuth integration
+  from a Connect server. (#431)
+- `get_integrations()` can now be passed a `Content` class object to retrieve a
+  list of integrations associated with that piece of content. (#432)
+- New functions allow you to manage the OAuth integrations on your Connect
+  server: `create_integration()`, `update_integration()` and
+  `delete_integration()`. (#434)
+- New `search_content()` function which lets you search and filter content items
+  on the Connect server. (#272, #447)
+- New `lock_content()` and `unlock_content()` functions for locking and unlocking
+  content items. (#453)
+- Updated git-backed deployment functions to use v1 APIs (#459)
+
 # connectapi 0.8.0
 
 ## Breaking changes

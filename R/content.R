@@ -1,15 +1,15 @@
 #' Content
 #'
-#' An R6 class that represents content
+#' An R6 class that represents content.
 #'
 #' @family R6 classes
 #' @export
 Content <- R6::R6Class(
   "Content",
   public = list(
-    #' @field connect An R6 Connect object
+    #' @field connect An R6 Connect object.
     connect = NULL,
-    #' @field content The content details from Posit Connect
+    #' @field content The content details from Posit Connect. Properties are described in [get_content()].
     content = NULL,
 
     #' @description Initialize this content.
@@ -22,24 +22,17 @@ Content <- R6::R6Class(
       # at least guid, url, title to be functional
       self$content <- content
     },
-    #' @description Returns the `Connect` instance.
-    get_connect = function() {
-      self$connect
-    },
-    #' @description Returns the underlying content data.
-    get_content = function() {
-      self$content
-    },
+
     #' @description Obtain the content data from the Connect server.
     get_content_remote = function() {
-      new_content_details <- self$get_connect()$content(self$get_content()$guid)
+      new_content_details <- self$connect$content(self$content$guid)
       self$content <- new_content_details
-      self$get_content()
+      self$content
     },
     #' @description Return the set of content bundles.
     get_bundles = function() {
-      url <- v1_url("content", self$get_content()$guid, "bundles")
-      self$get_connect()$GET(url)
+      url <- v1_url("content", self$content$guid, "bundles")
+      self$connect$GET(url)
     },
     #' @description Download the source archive for a content bundle.
     #' @param bundle_id The bundle identifer.
@@ -52,12 +45,12 @@ Content <- R6::R6Class(
     ) {
       url <- v1_url(
         "content",
-        self$get_content()$guid,
+        self$content$guid,
         "bundles",
         bundle_id,
         "download"
       )
-      self$get_connect()$GET(
+      self$connect$GET(
         url,
         httr::write_disk(filename, overwrite = overwrite),
         parser = "raw"
@@ -67,20 +60,15 @@ Content <- R6::R6Class(
     #' @description Delete a content bundle.
     #' @param bundle_id The bundle identifer.
     bundle_delete = function(bundle_id) {
-      url <- v1_url("content", self$get_content()$guid, "bundles", bundle_id)
-      self$get_connect()$DELETE(url)
-    },
-    #' @description Get this (remote) content item.
-    internal_content = function() {
-      url <- unversioned_url("applications", self$get_content()$guid)
-      self$get_connect()$GET(url)
+      url <- v1_url("content", self$content$guid, "bundles", bundle_id)
+      self$connect$DELETE(url)
     },
     #' @description Update this content item.
     #' @param ... Content fields.
     update = function(...) {
-      con <- self$get_connect()
+      con <- self$connect
       error_if_less_than(con$version, "1.8.6")
-      url <- v1_url("content", self$get_content()$guid)
+      url <- v1_url("content", self$content$guid)
       body <- rlang::list2(...)
       if (length(body)) {
         # Only need to make a request if there are changes
@@ -90,13 +78,13 @@ Content <- R6::R6Class(
     },
     #' @description Delete this content item.
     danger_delete = function() {
-      con <- self$get_connect()
-      url <- v1_url("content", self$get_content()$guid)
+      con <- self$connect
+      url <- v1_url("content", self$content$guid)
       con$DELETE(url)
     },
     #' @description Return the URL for this content.
     get_url = function() {
-      self$get_content()$content_url
+      self$content$content_url
     },
     #' @description Return the URL for this content in the Posit Connect dashboard.
     #' @param pane The pane in the dashboard to link to.
@@ -168,18 +156,13 @@ Content <- R6::R6Class(
     #' @param key The job key.
     job = function(key) {
       warn_experimental("job")
-      url <- unversioned_url(
-        "applications",
-        self$get_content()$guid,
-        "job",
-        key
-      )
-      res <- self$get_connect()$GET(url)
+      guid <- self$content$guid
+      url <- unversioned_url("applications", guid, "job", key)
+      res <- self$connect$GET(url)
 
-      content_guid <- self$get_content()$guid
       purrr::map(
         list(res),
-        ~ purrr::list_modify(.x, app_guid = content_guid)
+        ~ purrr::list_modify(.x, app_guid = guid)
       )[[1]]
     },
     #' @description Terminate a single job for this content item.
@@ -196,18 +179,15 @@ Content <- R6::R6Class(
     #' @description Return the variants for this content.
     variants = function() {
       warn_experimental("variants")
-      url <- unversioned_url(
-        "applications",
-        self$get_content()$guid,
-        "variants"
-      )
-      self$get_connect()$GET(url)
+      guid <- self$content$guid
+      url <- unversioned_url("applications", guid, "variants")
+      self$connect$GET(url)
     },
     #' @description Set a tag for this content.
     #' @param tag_id The tag identifier.
     tag_set = function(tag_id) {
-      self$get_connect()$set_content_tag(
-        self$get_content()$guid,
+      self$connect$set_content_tag(
+        self$content$guid,
         tag_id = tag_id
       )
     },
@@ -215,23 +195,23 @@ Content <- R6::R6Class(
     #' @param tag_id The tag identifier.
     tag_delete = function(tag_id) {
       # note that deleting the parent tag deletes all children
-      self$get_connect()$remove_content_tag(
-        self$get_content()$guid,
+      self$connect$remove_content_tag(
+        self$content$guid,
         tag_id = tag_id
       )
     },
     #' @description The tags for this content.
     tags = function() {
-      url <- v1_url("content", self$get_content()$guid, "tags")
-      self$get_connect()$GET(url)
+      url <- v1_url("content", self$content$guid, "tags")
+      self$connect$GET(url)
     },
     #' @description Add a principal to the ACL for this content.
     #' @param principal_guid GUID for the target user or group.
     #' @param principal_type Acting on user or group.
     #' @param role The kind of content access.
     permissions_add = function(principal_guid, principal_type, role) {
-      url <- v1_url("content", self$get_content()$guid, "permissions")
-      self$get_connect()$POST(
+      url <- v1_url("content", self$content$guid, "permissions")
+      self$connect$POST(
         url,
         body = list(
           principal_guid = principal_guid,
@@ -246,8 +226,8 @@ Content <- R6::R6Class(
     #' @param principal_type Acting on user or group.
     #' @param role The kind of content access.
     permissions_update = function(id, principal_guid, principal_type, role) {
-      url <- v1_url("content", self$get_content()$guid, "permissions", id)
-      self$get_connect()$PUT(
+      url <- v1_url("content", self$content$guid, "permissions", id)
+      self$connect$PUT(
         url,
         body = list(
           principal_guid = principal_guid,
@@ -259,20 +239,20 @@ Content <- R6::R6Class(
     #' @description Remove an entry from the ACL for this content.
     #' @param id The target identifier.
     permissions_delete = function(id) {
-      url <- v1_url("content", self$get_content()$guid, "permissions", id)
-      self$get_connect()$DELETE(url)
+      url <- v1_url("content", self$content$guid, "permissions", id)
+      self$connect$DELETE(url)
     },
     #' @description Obtain some or all of the ACL for this content.
     #' @param id The target identifier.
     #' @param add_owner Include the content owner in the result set.
     permissions = function(id = NULL, add_owner = FALSE) {
-      guid <- self$get_content()$guid
+      guid <- self$content$guid
       if (is.null(id)) {
-        url <- v1_url("content", self$get_content()$guid, "permissions")
+        url <- v1_url("content", self$content$guid, "permissions")
       } else {
-        url <- v1_url("content", self$get_content()$guid, "permissions", id)
+        url <- v1_url("content", self$content$guid, "permissions", id)
       }
-      res <- self$get_connect()$GET(url)
+      res <- self$connect$GET(url)
       # NOTE: the default for the low-level functions is to map to the API
       # as close as possible. This differs from the "cleaner UX" functions
       if (add_owner) {
@@ -280,7 +260,7 @@ Content <- R6::R6Class(
           id = NA_character_,
           content_guid = guid,
           # TODO: what if groups can own content?
-          principal_guid = self$get_content()$owner_guid,
+          principal_guid = self$content$owner_guid,
           principal_type = "user",
           role = "owner"
         )
@@ -290,14 +270,14 @@ Content <- R6::R6Class(
     },
     #' @description Return the environment variables set for this content.
     environment = function() {
-      url <- v1_url("content", self$get_content()$guid, "environment")
-      self$get_connect()$GET(url)
+      url <- v1_url("content", self$content$guid, "environment")
+      self$connect$GET(url)
     },
     #' @description Adjust the environment variables set for this content.
     #' @param ... Environment variable names and values. Use `NA` as the value
     #' to unset variables.
     environment_set = function(...) {
-      url <- v1_url("content", self$get_content()$guid, "environment")
+      url <- v1_url("content", self$content$guid, "environment")
       # post with
       # key = NA to remove
       vals <- rlang::list2(...)
@@ -307,12 +287,12 @@ Content <- R6::R6Class(
       })
       names(body) <- NULL
 
-      self$get_connect()$PATCH(path = url, body = body)
+      self$connect$PATCH(path = url, body = body)
     },
     #' @description Overwrite the environment variables set for this content.
     #' @param ... Environment variable names and values.
     environment_all = function(...) {
-      url <- v1_url("content", self$get_content()$guid, "environment")
+      url <- v1_url("content", self$content$guid, "environment")
 
       vals <- rlang::list2(...)
       if (length(vals) == 0) {
@@ -326,40 +306,71 @@ Content <- R6::R6Class(
         names(body) <- NULL
       }
 
-      self$get_connect()$PUT(path = url, body = body)
+      self$connect$PUT(path = url, body = body)
     },
     #' @description Deploy this content
     #' @param bundle_id Target bundle identifier.
     deploy = function(bundle_id = NULL) {
       body <- list(bundle_id = bundle_id)
-      self$get_connect()$POST(
-        v1_url("content", self$get_content()$guid, "deploy"),
+      self$connect$POST(
+        v1_url("content", self$content$guid, "deploy"),
         body = body
       )
     },
+    #' @description Get Git repository details
+    #' @return NULL if no repo is set, otherwise a list with fields:
+    #' - repository
+    #' - branch
+    #' - directory
+    #' - polling
+    #' - last_error
+    #' - last_known_commit
+    repository = function() {
+      con <- self$connect
+      error_if_less_than(con$version, "2022.12.0")
+      guid <- self$content$guid
+      resp <- con$GET(
+        v1_url("content", guid, "repository"),
+        parser = NULL
+      )
+      if (httr::status_code(resp) == 404) {
+        # 404 means there is no repository set
+        return(NULL)
+      }
+      con$raise_error(resp)
+      httr::content(resp, as = "parsed")
+    },
     #' @description Adjust Git polling.
-    #' @param enabled Polling enabled.
-    repo_enable = function(enabled = TRUE) {
-      warn_experimental("repo_enable")
-      self$get_connect()$PUT(
-        unversioned_url("applications", self$get_content()$guid, "repo"),
-        body = list(
-          enabled = enabled
-        )
+    #' @param polling Polling enabled.
+    repo_enable = function(polling = TRUE) {
+      con <- self$connect
+      error_if_less_than(con$version, "2022.12.0")
+      guid <- self$content$guid
+      con$PATCH(
+        v1_url("content", guid, "repository"),
+        body = list(polling = polling)
       )
     },
     #' @description Adjust Git repository
     #' @param repository Git repository URL
     #' @param branch Git repository branch
-    #' @param subdirectory Git repository directory
-    repo_set = function(repository, branch, subdirectory) {
-      warn_experimental("repo_set")
-      self$get_connect()$POST(
-        unversioned_url("applications", self$get_content()$guid, "repo"),
+    #' @param directory Git repository directory
+    #' @param polling Whether to check for updates
+    repo_set = function(
+      repository,
+      branch = "main",
+      directory = ".",
+      polling = FALSE
+    ) {
+      guid <- self$content$guid
+      error_if_less_than(self$connect$version, "2022.12.0")
+      self$connect$PUT(
+        v1_url("content", guid, "repository"),
         body = list(
           repository = repository,
           branch = branch,
-          subdirectory = subdirectory
+          directory = directory,
+          polling = polling
         )
       )
     },
@@ -371,18 +382,18 @@ Content <- R6::R6Class(
     #' @param ... Unused.
     print = function(...) {
       cat("Posit Connect Content: \n")
-      cat("  Content GUID: ", self$get_content()$guid, "\n", sep = "")
+      cat("  Content GUID: ", self$content$guid, "\n", sep = "")
       cat(
         "  Content URL: ",
-        self$get_content()$dashboard_url,
+        self$content$dashboard_url,
         "\n",
         sep = ""
       )
-      cat("  Content Title: ", self$get_content()$title, "\n", sep = "")
+      cat("  Content Title: ", self$content$title, "\n", sep = "")
       cat("\n")
       cat(
         'content_item(client, guid = "',
-        self$get_content()$guid,
+        self$content$guid,
         '")',
         "\n",
         sep = ""
@@ -521,7 +532,7 @@ Environment <- R6::R6Class(
 get_environment <- function(content) {
   validate_R6_class(content, "Content")
   content_data <- content$get_content_remote()
-  connect_client <- content$get_connect()
+  connect_client <- content$connect
   return(Environment$new(connect_client, content_data))
 }
 
@@ -594,7 +605,7 @@ content_item <- function(connect, guid) {
   # TODO : think about how to handle if GUID does not exist
   validate_R6_class(connect, "Connect")
 
-  res <- connect$get_connect()$content(guid)
+  res <- connect$content(guid)
 
   Content$new(connect = connect, content = res)
 }
@@ -617,7 +628,7 @@ content_title <- function(connect, guid, default = "Unknown Content") {
 
   content_title <- tryCatch(
     {
-      res <- suppressMessages(connect$get_connect()$content(guid))
+      res <- suppressMessages(connect$content(guid))
       # TODO: What about length 0?
       if (is.null(res$title)) {
         return(default)
@@ -991,7 +1002,7 @@ content_delete <- function(content, force = FALSE) {
 
   message(glue::glue("Deleting content '{cn$title}' ({cn$guid})"))
   res <- content$danger_delete()
-  content$get_connect()$raise_error(res)
+  content$connect$raise_error(res)
 
   return(content)
 }
@@ -1049,6 +1060,65 @@ content_update_access_type <- function(
 #' @export
 content_update_owner <- function(content, owner_guid) {
   content_update(content = content, owner_guid = owner_guid)
+}
+
+#' Lock or Unlock Content
+#'
+#' Lock or unlock a content item. When content is locked, all processes are
+#' terminated, rendering is disabled, and new bundles cannot be deployed.
+#'
+#' `lock_content()` locks a content item with an optional message displayed to
+#' visitors (supports Markdown).
+#'
+#' `unlock_content()` unlocks a content item, reverting the effects of locking.
+#'
+#' @param content An R6 content item
+#' @param locked_message Optional. A custom message that is displayed by the
+#' content item when locked. It is possible to format this message using Markdown.
+#'
+#' @return An R6 content item
+#'
+#' @family content functions
+#' @rdname lock_content
+#' @export
+#' @examples
+#' \dontrun{
+#' # Lock content with a message
+#' client <- connect()
+#' content <- content_item(client, "content-guid")
+#' content <- lock_content(content, locked_message = "Ah ah ah! You didn't say the magic word!")
+#'
+#' # Lock content without a message
+#' content <- lock_content(content)
+#'
+#' # Unlock content
+#' content <- unlock_content(content)
+#' }
+lock_content <- function(content, locked_message = "") {
+  validate_R6_class(content, "Content")
+  error_if_less_than(content$connect$version, "2024.08.0")
+
+  update_params <- list(locked = TRUE)
+  if (!is.null(locked_message)) {
+    update_params$locked_message <- locked_message
+  }
+
+  content$update(!!!update_params)
+  content$get_content_remote()
+
+  return(content)
+}
+
+#' @rdname lock_content
+#' @export
+unlock_content <- function(content) {
+  validate_R6_class(content, "Content")
+  error_if_less_than(content$connect$version, "2024.08.0")
+
+  content$update(locked = FALSE, locked_message = "")
+  content$get_content_remote()
+
+  return(content)
 }
 
 
@@ -1122,7 +1192,7 @@ delete_bundle <- function(content, bundle_id) {
     "Deleting bundle {bundle_id} for content '{cn$title}' ({cn$guid})"
   ))
   res <- content$bundle_delete(bundle_id)
-  content$get_connect()$raise_error(res)
+  content$connect$raise_error(res)
   return(content)
 }
 
@@ -1292,7 +1362,7 @@ get_user_permission <- function(content, guid, add_owner = TRUE) {
 #' @rdname permissions
 #' @export
 get_my_permission <- function(content, add_owner = TRUE) {
-  my_guid <- content$get_connect()$GET("me")$guid
+  my_guid <- content$connect$GET("me")$guid
   get_user_permission(content, my_guid, add_owner = add_owner)
 }
 
@@ -1433,4 +1503,136 @@ get_content_packages <- function(content) {
   error_if_less_than(content$connect$version, "2025.01.0")
   res <- content$packages()
   parse_connectapi_typed(res, connectapi_ptypes$content_packages)
+}
+
+#' Search for content on the Connect server
+#'
+#' @param client A Connect object
+#' @param q The search query, using the syntax described in the Connect
+#'   documentation on [content search
+#'   terms](https://docs.posit.co/connect/user/viewing-content/#searching-content)
+#' @param include Comma-separated character string of values indicating additional
+#'   details to include in the response. Values can be `owner` and `vanity_url`;
+#'   both are included by default.
+#' @param page_size The number of items to fetch per page. Maximum is 500.
+#' @param limit Maximum number of items to return overall. Defaults to `Inf` (all items).
+#' @param ... Additional query parameters passed to the API for future expansion.
+#'   Note: If you pass `page_number` here, it will affect the *starting* page
+#'   for pagination, but all subsequent pages will still be fetched. This is
+#'   usually not what you want.
+#'
+#' @return
+#' A list of [Content] objects, of class "connect_content_list"
+#'
+#' @details
+#' Please see https://docs.posit.co/connect/api/#get-/v1/search/content for more
+#' information.
+#'
+#' @examples
+#' \dontrun{
+#' library(connectapi)
+#' client <- connect()
+#'
+#' my_content <- search_content(client, q = "owner:@me")
+#'
+#' shiny_content <- purrr::keep(my_content, function(x) {
+#'   x$content$app_mode == "rmd-shiny"
+#' })
+#'
+#' purrr::map(shiny_content, lock_content)
+#' }
+#'
+#' @family content functions
+#' @export
+search_content <- function(
+  client,
+  q = NULL,
+  include = "owner,vanity_url",
+  page_size = 500,
+  limit = Inf,
+  ...
+) {
+  error_if_less_than(client$version, "2024.04.0")
+
+  res <- page_offset(
+    client,
+    req = .search_content(
+      client,
+      q = q,
+      include = include,
+      page_size = page_size,
+      ...
+    ),
+    limit = limit
+  )
+
+  content_list <- purrr::map(res, function(x) {
+    Content$new(client, x)
+  })
+
+  class(content_list) <- c("connect_content_list", class(content_list))
+  content_list
+}
+
+.search_content <- function(
+  client,
+  q,
+  include,
+  page_number = 1,
+  page_size = 500,
+  ...
+) {
+  path <- v1_url("search", "content")
+
+  query <- list(
+    q = q,
+    page_number = page_number,
+    page_size = page_size,
+    include = include,
+    ...
+  )
+
+  client$GET(path, query = query)
+}
+
+#' Convert content list to a data frame
+#'
+#' @description
+#' Converts a list returned by [search_content()] into a data frame.
+#'
+#' @param x A `connect_content_list` object (from [search_content()]).
+#' @param row.names Passed to [base::as.data.frame()].
+#' @param optional Passed to [base::as.data.frame()].
+#' @param ... Passed to [base::as.data.frame()].
+#'
+#' @return A `data.frame` with one row per content item.
+#' @export
+as.data.frame.connect_content_list <- function(
+  x,
+  row.names = NULL, # nolint
+  optional = FALSE,
+  ...
+) {
+  content_tbl <- as_tibble(x)
+  as.data.frame(
+    content_tbl,
+    row.names = row.names,
+    optional = optional,
+    ...
+  )
+}
+
+#' Convert integration list to a tibble
+#'
+#' @description
+#' Converts a list returned by [search_content()] to a tibble.
+#'
+#' @param x A `connect_content_list` object.
+#' @param ... Unused.
+#'
+#' @return A tibble with one row per content item.
+#' @export
+as_tibble.connect_content_list <- function(x, ...) {
+  content_data <- purrr::map(x, "content")
+  parse_connectapi_typed(content_data, connectapi_ptypes$content)
 }
