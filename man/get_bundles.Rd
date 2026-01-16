@@ -31,7 +31,6 @@ Other content functions:
 \code{\link{get_associations}()},
 \code{\link{get_environment}()},
 \code{\link{get_image}()},
-\code{\link{get_job}()},
 \code{\link{get_jobs}()},
 \code{\link{get_log}()},
 \code{\link{get_thumbnail}()},
@@ -46,7 +45,6 @@ Other content functions:
 \code{\link{set_run_as}()},
 \code{\link{set_thumbnail}()},
 \code{\link{set_vanity_url}()},
-\code{\link{swap_vanity_url}()},
 \code{\link{swap_vanity_urls}()},
 \code{\link{terminate_jobs}()},
 \code{\link{verify_content_name}()}
@@ -64,7 +62,6 @@ Other content functions:
 \code{\link{get_associations}()},
 \code{\link{get_environment}()},
 \code{\link{get_image}()},
-\code{\link{get_job}()},
 \code{\link{get_jobs}()},
 \code{\link{get_log}()},
 \code{\link{get_thumbnail}()},
@@ -79,7 +76,6 @@ Other content functions:
 \code{\link{set_run_as}()},
 \code{\link{set_thumbnail}()},
 \code{\link{set_vanity_url}()},
-\code{\link{swap_vanity_url}()},
 \code{\link{swap_vanity_urls}()},
 \code{\link{terminate_jobs}()},
 \code{\link{verify_content_name}()}

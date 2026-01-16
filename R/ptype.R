@@ -20,7 +20,8 @@ connectapi_ptypes <- list(
   groups = tibble::tibble(
     "guid" = NA_character_,
     "name" = NA_character_,
-    "owner_guid" = NA_character_
+    "owner_guid" = NA_character_,
+    "gid" = NA_character_
   ),
   usage_shiny = tibble::tibble(
     "content_guid" = NA_character_,
@@ -193,25 +194,6 @@ connectapi_ptypes <- list(
     cluster = NA_character_,
     image = NA_character_,
     run_as = NA_character_,
-  ),
-  job = tibble::tibble(
-    pid = NA_integer_,
-    key = NA_character_,
-    app_id = NA_integer_,
-    variant_id = NA_integer_,
-    bundle_id = NA_integer_,
-    tag = NA_character_,
-    finalized = NA,
-    hostname = NA_character_,
-    origin = NA_character_,
-    stdout = NA_list_,
-    stderr = NA_list_,
-    logged_error = NA_list_,
-    start_time = NA_datetime_,
-    end_time = NA_datetime_,
-    exit_code = NA_integer_,
-    app_guid = NA_character_,
-    variant_key = NA_character_
   ),
   bundles = tibble::tibble(
     id = NA_character_,

@@ -402,7 +402,7 @@ download_bundle <- function(
 #' }
 #' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true")
 #'
-#' client <- connect(prefix = "TEST_1")
+#' client <- connect()
 #' bnd <- bundle_path(system.file("tests/testthat/examples/static.tar.gz", package = "connectapi"))
 #' deploy(client, bnd)
 #'
@@ -413,8 +413,7 @@ deploy <- function(
   title = name,
   guid = NULL,
   ...,
-  .pre_deploy = {
-  }
+  .pre_deploy = {}
 ) {
   validate_R6_class(bundle, "Bundle")
   validate_R6_class(connect, "Connect")
@@ -622,29 +621,6 @@ swap_vanity_urls <- function(content_a, content_b) {
   )
 }
 
-#' Swap Vanity URLs
-#'
-#' Swap the vanity URLs of two pieces of content.
-#' This function is deprecated; please use \code{\link{swap_vanity_urls}}.
-#'
-#' @param from A Content object
-#' @param to A Content object
-#'
-#' @returns A list of the new vanity URLs for `from` and `to`
-#'
-#' @family content functions
-#' @export
-swap_vanity_url <- function(from, to) {
-  lifecycle::deprecate_warn("0.6.0", "swap_vanity_url()", "swap_vanity_urls()")
-  res <- swap_vanity_urls(from, to)
-  return(
-    list(
-      from = res[["content_a"]],
-      to = res[["content_b"]]
-    )
-  )
-}
-
 #' Poll Task
 #'
 #' Polls a task, waiting for information about a deployment. If the task has
@@ -695,7 +671,6 @@ poll_task <- function(task, wait = 1, callback = message) {
   }
   task
 }
-
 
 #' Build a Dashboard URL from a Content Item
 #'

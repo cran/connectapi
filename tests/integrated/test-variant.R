@@ -1,9 +1,9 @@
 # Temporarily skip these on newer Connect versions because the manifest for this
 # content specifies an old version of R not found in newer images.
-skip_if(safe_server_version(test_conn_1) > "2024.03.0")
+skip_if(safe_server_version(client) > "2024.03.0")
 
 # ensure that RSPM is being used so these do not take eternity
-rmd_content <- deploy_example(test_conn_1, "rmarkdown")
+rmd_content <- deploy_example(client, "rmarkdown")
 
 # TODO: very hard to test parameterized rmarkdown because creating a
 # programmatic variant is not possible
@@ -59,9 +59,4 @@ test_that("get_jobs works", {
 
   all_jobs <- get_jobs(vr)
   expect_gt(nrow(all_jobs), 1)
-
-  sel_key <- all_jobs$key[[1]]
-  one_job <- get_job(vr, sel_key)
-  expect_equal(nrow(one_job), 1)
-  expect_equal(one_job$key[[1]], sel_key)
 })
