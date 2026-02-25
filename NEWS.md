@@ -1,4 +1,19 @@
-# connectapi (development version)
+# connectapi 0.11.0
+
+- `get_usage()` now allows for filtering by content GUID with the `content_guid` 
+  argument. This is only available on Connect server versions 2026.01 and later. 
+- The `activate` argument to `set_schedule_*()` functions is deprecated and
+  no longer has any effect, due to changes in the Connect API. It will be
+  removed in a future release. (#500)
+- Added a single retry to `content_restart()` to more robustly clean up
+  temporary environment variables. (#498)
+- Improved performance of `page_cursor()`. (#501)
+  
+## Breaking changes
+
+- Removed `get_image`, `delete_image`, `has_image`, `set_image_path`,
+  `set_image_url`, `set_image_websthot`, and `Connect$server_settings_r`, all of
+  which were deprecated since version 0.3.1.
 
 # connectapi 0.10.0
 
