@@ -1,3 +1,7 @@
+# connectapi 0.11.1
+
+- `get_usage()` now returns the id column as a character to match other parts of the API (#512).
+
 # connectapi 0.11.0
 
 - `get_usage()` now allows for filtering by content GUID with the `content_guid` 
