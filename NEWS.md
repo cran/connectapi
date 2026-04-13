@@ -1,18 +1,28 @@
+# connectapi 0.12.0
+
+- Apps running on Connect Cloud are now supported for OAuth integrations via the
+  new `on_connect_cloud()` helper. The `POSIT_PRODUCT` environment variable is
+  now recognized as an alternative to `RSTUDIO_PRODUCT` for detecting Connect
+  (#522).
+- When using integrations, prefer to read from
+  `CONNECT_CONTENT_SESSION_TOKEN_FILE` to find the session token. This helps
+  long-running processes ensure that they can maintain fresh credentials (#518).
+
 # connectapi 0.11.1
 
 - `get_usage()` now returns the id column as a character to match other parts of the API (#512).
 
 # connectapi 0.11.0
 
-- `get_usage()` now allows for filtering by content GUID with the `content_guid` 
-  argument. This is only available on Connect server versions 2026.01 and later. 
+- `get_usage()` now allows for filtering by content GUID with the `content_guid`
+  argument. This is only available on Connect server versions 2026.01 and later.
 - The `activate` argument to `set_schedule_*()` functions is deprecated and
   no longer has any effect, due to changes in the Connect API. It will be
   removed in a future release. (#500)
 - Added a single retry to `content_restart()` to more robustly clean up
   temporary environment variables. (#498)
 - Improved performance of `page_cursor()`. (#501)
-  
+
 ## Breaking changes
 
 - Removed `get_image`, `delete_image`, `has_image`, `set_image_path`,
