@@ -1,7 +1,7 @@
-4b63ff8fbee0b513d542d3220c03c3bc *DESCRIPTION
+2e856e45542557933a97836c3e8e58ac *DESCRIPTION
 43c500889d26c323081dc476f56fcbd2 *LICENSE
 ee9eb35af570fc51e6498042ccb24e11 *NAMESPACE
-78819c41ce5dc278fae8297f1114147b *NEWS.md
+da185034eef6897980d8cd234a220e6f *NEWS.md
 0b4c945e254055778af0aa93923d3a40 *R/audits.R
 332091ae4c84305f236c635a2060fc95 *R/browse.R
 80406d4661a0519a2733d635f6f20811 *R/connect.R
@@ -10,7 +10,7 @@ d7a54580ba6b0c63cf4b2782267b6f43 *R/connectapi-package.R
 bf107300a2b72fe743343f6d0372e3b1 *R/content.R
 d4671103c7a352e60e1fd8bde245285f *R/deploy.R
 797684789731feb191c5a551bcc11459 *R/get.R
-91133293abecd6de9a7020936c57fba0 *R/git.R
+99a3685179c682e66a2283eb8b01e5a6 *R/git.R
 8004c4116ba5f66569bb9305ef35b018 *R/groups.R
 e7de85e079562539136440f720b7d4e2 *R/integrations.R
 3ddf521f3cf4f1cd47ab67503c659447 *R/lazy.R
@@ -31,10 +31,10 @@ bab0fcc06333802fa9a8e023382a2591 *R/variant.R
 b17fb879b3e7610ada7464e8554f6ef2 *build/vignette.rds
 e5e52c20a26fdc1fcd31f86b4a03177a *inst/WORDLIST
 9c23816fa781b9d68db08daae4c8f7a2 *inst/doc/customize-http.Rmd
-f3ec2b72400ebf5be02f667d6b021f38 *inst/doc/customize-http.html
+29eb7c9929fcfe7bea81b863bdc997df *inst/doc/customize-http.html
 46750e778a5cdb4d65c347f8e43df623 *inst/doc/getting-started.R
 44dede3767768c29b7ed609be32602e1 *inst/doc/getting-started.Rmd
-806fe7eae73bfc007465177a2ed8e74c *inst/doc/getting-started.html
+964dc9ccf57aceb022732ceceab60249 *inst/doc/getting-started.html
 601c3e116fc4aa18aa13c911d3fb66c4 *inst/logo.png
 c97bea7321c4d54f41406711dd71b1c8 *man/Bundle.Rd
 e45604c16958ffe5614f8c19f68a392b *man/Content.Rd
@@ -330,7 +330,7 @@ e49378cb166fa385b716a0dbcea0ff8a *tests/testthat/examples/static.tar.gz
 5975784264362e57dbb0ac597cfb5d9b *tests/testthat/test-content.R
 d10140c464c23d929372f16a209d38fe *tests/testthat/test-env-vars.R
 f30dff2454031e417d63a450382194fe *tests/testthat/test-get.R
-c6f039bb12ddeb386abc6f5145d9607a *tests/testthat/test-git.R
+0e29ab22de2c44d312690a82de29771f *tests/testthat/test-git.R
 af2f04d030575aff14c0cced0e5d7bc9 *tests/testthat/test-groups.R
 3963966559aba401b89bef3a0ac739e6 *tests/testthat/test-instrumentation.R
 283626260159c95714deeb29b0d682eb *tests/testthat/test-integrations.R
